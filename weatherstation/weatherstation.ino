@@ -1,25 +1,41 @@
-#include <WeatherDisplay.h>
+#include <WeatherLEDs.h>
 
-#define DISPLAY_CLK 3
-#define DISPLAY_DIO 4
+#define LEDS_DS    7
+#define LEDS_ST_CP 6
+#define LEDS_SH_CP 5
 
-WeatherDisplay display = WeatherDisplay(DISPLAY_CLK, DISPLAY_DIO);
+WeatherLEDs leds = WeatherLEDs(LEDS_DS, LEDS_SH_CP, LEDS_ST_CP);
 
 void setup()
 {
   Serial.begin(9600);
 
-  display.begin();
+  leds.begin();
 }
 
-void loop()
-{  
-  for(int i = 0; i < 9999; ++i)
-  {
-    display.showNumber(i);
-    delay(5);
-  }
+bool backlight = false;
 
-  display.showTime(13, 37);
-  delay(2000);  
+void loop()
+{
+  leds.backlight(backlight);
+  leds.set(WEATHER_LED_TIME);
+  delay(1000);
+
+  leds.backlight(backlight);
+  leds.set(WEATHER_LED_TEMPERATURE);
+  delay(1000);
+
+  leds.backlight(backlight);
+  leds.set(WEATHER_LED_PRESSURE);
+  delay(1000);
+
+  leds.backlight(backlight);
+  leds.set(WEATHER_LED_HUMIDITY);
+  delay(1000);
+
+  leds.backlight(backlight);
+  leds.set(WEATHER_LED_UV);
+  delay(1000);
+
+  backlight = !backlight;
 }
