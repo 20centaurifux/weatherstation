@@ -16,10 +16,7 @@
  ***************************************************************************/
 
 #ifndef ARDUINO
-#include <cstdint>
 #include <cstring>
-#else
-#include "Arduino.h"
 #endif
 
 #include "LogValue.h"

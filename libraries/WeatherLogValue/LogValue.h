@@ -18,6 +18,12 @@
 #ifndef WEATHER_LOG_VALUE_H
 #define WEATHER_LOG_VALUE_H
 
+#ifndef ARDUINO
+#include <cstdint>
+#else
+#include "Arduino.h"
+#endif
+
 typedef struct __attribute__((packed))
 {
 	uint32_t timestamp;
