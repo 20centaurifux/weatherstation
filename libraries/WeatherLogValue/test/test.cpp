@@ -219,43 +219,60 @@ class LogValueBuilderTest : public CppUnit::TestFixture
 
 		void testError()
 		{
+			std::random_device dev;
+			std::mt19937 rng(dev());
+			std::uniform_int_distribution<uint8_t> errDist(0, LOG_VALUE_MAX_ERROR);
+
+			int errCode = errDist(rng);
+
 			auto v = _builder.build();
 
 			CPPUNIT_ASSERT(v.errors == 0);
 
-			_builder.setTemperatureFailure(13);
+			bool success = _builder.setTemperatureFailure(errCode);
 
 			v = _builder.build();
 
+			CPPUNIT_ASSERT(success == true);
 			CPPUNIT_ASSERT(LOG_VALUE_TEMPERATURE_ERROR(v));
-			CPPUNIT_ASSERT(LOG_VALUE_TEMPERATURE_ERROR_CODE(v) == 13);
+			CPPUNIT_ASSERT(LOG_VALUE_TEMPERATURE_ERROR_CODE(v) == errCode);
 
-			_builder.setPressureFailure(128);
+			success = _builder.setTemperatureFailure(LOG_VALUE_MAX_ERROR + 1);
+
+			CPPUNIT_ASSERT(success == false);
+
+			_builder.setPressureFailure(errCode);
 
 			v = _builder.build();
 
 			CPPUNIT_ASSERT(LOG_VALUE_PRESSURE_ERROR(v));
-			CPPUNIT_ASSERT(LOG_VALUE_PRESSURE_ERROR_CODE(v) == 128);
+			CPPUNIT_ASSERT(LOG_VALUE_PRESSURE_ERROR_CODE(v) == errCode);
 
-			_builder.setUVFailure(201);
+			success = _builder.setPressureFailure(LOG_VALUE_MAX_ERROR + 1);
+
+			CPPUNIT_ASSERT(success == false);
+
+			success = _builder.setUVFailure(errCode);
 
 			v = _builder.build();
 
 			CPPUNIT_ASSERT(LOG_VALUE_UV_ERROR(v));
-			CPPUNIT_ASSERT(LOG_VALUE_UV_ERROR_CODE(v) == 201);
+			CPPUNIT_ASSERT(LOG_VALUE_UV_ERROR_CODE(v) == errCode);
 
-			bool success = _builder.setHumidityFailure(128);
+			success = _builder.setUVFailure(LOG_VALUE_MAX_ERROR + 1);
 
 			CPPUNIT_ASSERT(success == false);
 
-			success = _builder.setHumidityFailure(127);
-
-			CPPUNIT_ASSERT(success == true);
+			success = _builder.setHumidityFailure(errCode);
 
 			v = _builder.build();
 
 			CPPUNIT_ASSERT(LOG_VALUE_HUMIDITY_ERROR(v));
-			CPPUNIT_ASSERT(LOG_VALUE_HUMIDITY_ERROR_CODE(v) == 127);
+			CPPUNIT_ASSERT(LOG_VALUE_HUMIDITY_ERROR_CODE(v) == errCode);
+
+			success = _builder.setHumidityFailure(LOG_VALUE_MAX_ERROR + 1);
+
+			CPPUNIT_ASSERT(success == false);
 		}
 
 	private:
@@ -283,7 +300,7 @@ class LogValueSerializationTest : public CppUnit::TestFixture
 			_pressDist(std::uniform_int_distribution<uint16_t>(LOG_VALUE_PRESSURE_MIN, LOG_VALUE_PRESSURE_MAX)),
 			_humDist(std::uniform_int_distribution<uint8_t>(LOG_VALUE_HUMIDITY_MIN, LOG_VALUE_HUMIDITY_MAX)),
 			_uvDist(std::uniform_real_distribution<double>(LOG_VALUE_UV_MIN, LOG_VALUE_UV_MAX)),
-			_errDist(std::uniform_int_distribution<uint8_t>(0, 127)) {}
+			_errDist(std::uniform_int_distribution<uint8_t>(0, LOG_VALUE_MAX_ERROR)) {}
 
 		void testSerialization()
 		{

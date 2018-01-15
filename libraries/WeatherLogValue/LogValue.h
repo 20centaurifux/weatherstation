@@ -64,6 +64,8 @@ typedef struct __attribute__((packed))
 #define LOG_VALUE_DECODE_UV(v) (float)v.uv / 10
 #define LOG_VALUE_DECODE_HUMIDITY(v) v.hum
 
+#define LOG_VALUE_MAX_ERROR 63
+
 class LogValueBuilder
 {
 	public:
@@ -71,13 +73,13 @@ class LogValueBuilder
 		void reset();
 		void setTimestamp(uint32_t seconds);
 		bool setTemperature(float cel);
-		void setTemperatureFailure(uint8_t errcode);
+		bool setTemperatureFailure(uint8_t errCode);
 		bool setPressure(uint16_t hPa);
-		void setPressureFailure(uint8_t errcode);
+		bool setPressureFailure(uint8_t errCode);
 		bool setUV(float uv);
-		void setUVFailure(uint8_t errcode);
+		bool setUVFailure(uint8_t errCode);
 		bool setHumidity(uint8_t hum);
-		bool setHumidityFailure(uint8_t errcode);
+		bool setHumidityFailure(uint8_t errCode);
 		inline LogValue build() const { return _value; }
 
 	private:

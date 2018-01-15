@@ -54,10 +54,19 @@ bool LogValueBuilder::setTemperature(float t)
 	return success;
 }
 
-void LogValueBuilder::setTemperatureFailure(uint8_t errcode)
+bool LogValueBuilder::setTemperatureFailure(uint8_t errCode)
 {
-	_value.temp = errcode;
-	_value.errors |= 1;
+	bool success = false;
+
+	if(errCode <= LOG_VALUE_MAX_ERROR)
+	{
+		_value.temp = errCode;
+		_value.errors |= 1;
+
+		success = true;
+	}
+
+	return success;
 }
 
 bool LogValueBuilder::setPressure(uint16_t hPa)
@@ -75,10 +84,19 @@ bool LogValueBuilder::setPressure(uint16_t hPa)
 	return success;
 }
 
-void LogValueBuilder::setPressureFailure(uint8_t errcode)
+bool LogValueBuilder::setPressureFailure(uint8_t errCode)
 {
-	_value.hPa = errcode;
-	_value.errors |= 2;
+	bool success = false;
+
+	if(errCode <= LOG_VALUE_MAX_ERROR)
+	{
+		_value.hPa = errCode;
+		_value.errors |= 2;
+
+		success = true;
+	}
+
+	return success;
 }
 
 bool LogValueBuilder::setUV(float t)
@@ -98,10 +116,19 @@ bool LogValueBuilder::setUV(float t)
 	return success;
 }
 
-void LogValueBuilder::setUVFailure(uint8_t errcode)
+bool LogValueBuilder::setUVFailure(uint8_t errCode)
 {
-	_value.uv = errcode;
-	_value.errors |= 4;
+	bool success = false;
+
+	if(errCode <= LOG_VALUE_MAX_ERROR)
+	{
+		_value.uv = errCode;
+		_value.errors |= 4;
+
+		success = true;
+	}
+
+	return success;
 }
 
 bool LogValueBuilder::setHumidity(uint8_t hum)
@@ -119,13 +146,13 @@ bool LogValueBuilder::setHumidity(uint8_t hum)
 	return success;
 }
 
-bool LogValueBuilder::setHumidityFailure(uint8_t errcode)
+bool LogValueBuilder::setHumidityFailure(uint8_t errCode)
 {
 	bool success = false;
 
-	if(errcode <= 0x7f)
+	if(errCode <= LOG_VALUE_MAX_ERROR)
 	{
-		_value.hum = errcode;
+		_value.hum = errCode;
 		_value.errors |= 8;
 
 		success = true;
