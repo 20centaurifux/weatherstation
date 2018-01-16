@@ -328,6 +328,27 @@ void DeltaReader::read()
 	readValues();
 }
 
+size_t DeltaReader::size() const
+{
+	size_t size = 0;
+
+	if(_ptr != nullptr)
+	{
+		size_t index, left;
+
+		mapOffset(index, left);
+
+		if(left)
+		{
+			++index;
+		}
+
+		size = index;
+	}
+
+	return size;
+}
+
 uint8_t DeltaReader::seconds() const
 {
 	return _ptr != nullptr ? _seconds : 0;
@@ -397,7 +418,6 @@ void DeltaReader::reset()
 {
 	_ptr = nullptr;
 	_offset = 0;
-	_size = 0;
 	_errors = 0;
 	_seconds = 0;
 	_temp = 0;

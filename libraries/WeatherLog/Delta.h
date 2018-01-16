@@ -100,6 +100,7 @@ class DeltaReader
 		DeltaReader();
 		void setSource(const uint8_t *bytes);
 		void read();
+		size_t size() const;
 		uint8_t seconds() const;
 		bool hasTemperature() const;
 		bool temperatureFailed() const;
