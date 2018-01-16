@@ -34,6 +34,29 @@
 #define DELTA_HUMIDITY_MIN -63
 #define DELTA_HUMIDITY_MAX 63
 
+/*
+ * Deltas are stored in arrays of at most 6 bytes.
+ *
+ * Field                          Length (bits)
+ * =====================================
+ * flag                         | 1 (always 0)
+ * seconds                      | 6
+ * changed values               | 4
+ * temperature flags (optional) | 3
+ * pressure flags (optional)    | 2
+ * uv flags (optional)          | 3
+ * humidity flags (optional)    | 3
+ * temperature (optional)       | 4 or 8
+ * pressure (optional)          | 4
+ * uv (optional)                | 2 or 6
+ * humidity (optional)          | 4 or 6
+ *
+ * Values have 2 or 3 flags. If the given flag is set the stored value
+ * 1. is an error code.
+ * 2. is a positive number.
+ * 3. requires the maximum supported bit length (see table above).
+ */
+
 #define DELTA_MAX_SIZE 6
 
 class DeltaBuilder

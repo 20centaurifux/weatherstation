@@ -87,6 +87,20 @@ class LogValueBuilder
 		LogValue _value;
 };
 
+/*
+ * Serialized log values are stored in arrays of 9 bytes.
+ *
+ * Field         Length (bits)
+ * ============================
+ * flag        | 1 (always set)
+ * humidity    | 7
+ * uv          | 8
+ * timestamp   | 32
+ * errors      | 4
+ * pressure    | 9
+ * temperature | 11
+ */
+
 #define SERIALIZED_LOG_VALUE_SIZE 9
 
 void SerializeLogValue(const LogValue& value, uint8_t *dst);
