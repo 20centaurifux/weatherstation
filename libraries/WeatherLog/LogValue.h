@@ -19,6 +19,7 @@
 #define WEATHER_LOG_VALUE_H
 
 #ifndef ARDUINO
+#include <cstddef>
 #include <cstdint>
 #else
 #include "Arduino.h"

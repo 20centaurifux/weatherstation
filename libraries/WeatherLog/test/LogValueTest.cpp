@@ -21,6 +21,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <random>
+
 #include <LogValue.h>
 
 class LogValueBuilderTest : public CppUnit::TestFixture
