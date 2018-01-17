@@ -142,7 +142,7 @@ class DeltaReader
 		int8_t readBits(size_t count);
 };
 
-size_t ApplyDelta(LogValue& value, const uint8_t* delta);
+size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval);
 
 #endif
 

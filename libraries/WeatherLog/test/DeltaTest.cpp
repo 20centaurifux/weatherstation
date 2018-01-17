@@ -42,6 +42,7 @@ class WeatherDeltaTest : public CppUnit::TestFixture
 	CPPUNIT_TEST(testUVFailure);
 	CPPUNIT_TEST(testUVOutOfBounds);
 	CPPUNIT_TEST(testAll);
+	CPPUNIT_TEST(testApply);
 	CPPUNIT_TEST_SUITE_END();
 
 	#define INCREMENT_TIMESTAMP(v) _valueBuilder.setTimestamp(LOG_VALUE_DECODE_TIMESTAMP(v) + 120);
@@ -389,6 +390,94 @@ class WeatherDeltaTest : public CppUnit::TestFixture
 			CPPUNIT_ASSERT(_reader.temperature() == 10);
 		}
 
+		void testApply()
+		{
+			_valueBuilder.setTimestamp(120 + 7);
+			_valueBuilder.setTemperature(11.2);
+			_valueBuilder.setPressure(LOG_VALUE_PRESSURE_MIN + 2);
+			_valueBuilder.setHumidity(44);
+			_valueBuilder.setUV(1.7);
+
+			LogValue to = _valueBuilder.build();
+
+			buildDelta(to);
+			readDelta();
+
+			size_t size = ApplyDelta(_value, _bytes, 120);
+
+			CPPUNIT_ASSERT(size == _reader.size());
+			assertLogValue(127, 11.2, LOG_VALUE_PRESSURE_MIN + 2, 44, 1.7);
+
+			_value = to;
+
+			_valueBuilder.setTimestamp(240 + 60);
+			_valueBuilder.setTemperature(11.2);
+			_valueBuilder.setPressure(LOG_VALUE_PRESSURE_MIN + 1);
+			_valueBuilder.setHumidity(43);
+			_valueBuilder.setUV(2.1);
+
+			to = _valueBuilder.build();
+
+			buildDelta(to);
+			readDelta();
+
+			size = ApplyDelta(_value, _bytes, 120);
+
+			CPPUNIT_ASSERT(size == _reader.size());
+			assertLogValue(300, 11.2, LOG_VALUE_PRESSURE_MIN + 1, 43, 2.1);
+
+			_valueBuilder.setTimestamp(0);
+			_valueBuilder.setTemperature(-30.0);
+			_valueBuilder.setPressure(LOG_VALUE_PRESSURE_MIN);
+			_valueBuilder.setHumidity(0);
+			_valueBuilder.setUV(0);
+
+			_value = _valueBuilder.build();
+
+			_valueBuilder.setTimestamp(130);
+			_valueBuilder.setTemperatureFailure(10);
+			_valueBuilder.setPressure(LOG_VALUE_PRESSURE_MIN + 1);
+			_valueBuilder.setHumidityFailure(50);
+			_valueBuilder.setUVFailure(1);
+
+			to = _valueBuilder.build();
+
+			buildDelta(to);
+			readDelta();
+
+			size = ApplyDelta(_value, _bytes, 120);
+
+			CPPUNIT_ASSERT(size == _reader.size());
+			CPPUNIT_ASSERT(LOG_VALUE_DECODE_TIMESTAMP(_value) == 130);
+			CPPUNIT_ASSERT(LOG_VALUE_TEMPERATURE_ERROR(_value));
+			CPPUNIT_ASSERT(LOG_VALUE_TEMPERATURE_ERROR_CODE(_value) == 10);
+			CPPUNIT_ASSERT(LOG_VALUE_HUMIDITY_ERROR(_value));
+			CPPUNIT_ASSERT(LOG_VALUE_HUMIDITY_ERROR_CODE(_value) == 50);
+			CPPUNIT_ASSERT(LOG_VALUE_UV_ERROR_CODE(_value) == 1);
+
+			_valueBuilder.setTimestamp(0);
+			_valueBuilder.setTemperature(-30.0);
+			_valueBuilder.setPressureFailure(1);
+			_valueBuilder.setHumidity(0);
+			_valueBuilder.setUV(0);
+
+			_value = _valueBuilder.build();
+
+			_valueBuilder.setTimestamp(150);
+			_valueBuilder.setPressureFailure(7);
+
+			to = _valueBuilder.build();
+
+			buildDelta(to);
+			readDelta();
+
+			size = ApplyDelta(_value, _bytes, 120);
+
+			CPPUNIT_ASSERT(size == _reader.size());
+			CPPUNIT_ASSERT(LOG_VALUE_PRESSURE_ERROR(_value));
+			CPPUNIT_ASSERT(LOG_VALUE_PRESSURE_ERROR_CODE(_value) == 7);
+		}
+
 	private:
 		LogValueBuilder _valueBuilder;
 		LogValue _value;
@@ -454,6 +543,21 @@ class WeatherDeltaTest : public CppUnit::TestFixture
 			CPPUNIT_ASSERT(_reader.hasPressure() == false);
 			CPPUNIT_ASSERT(_reader.hasHumidity() == false);
 			CPPUNIT_ASSERT(_reader.hasUV() == true);
+		}
+
+		void assertLogValue(uint32_t timestamp, double temp, int pressure, int humidity, double uv)
+		{
+			CPPUNIT_ASSERT(LOG_VALUE_DECODE_TIMESTAMP(_value) == timestamp);
+			CPPUNIT_ASSERT(LOG_VALUE_DECODE_PRESSURE(_value) == pressure);
+			CPPUNIT_ASSERT(LOG_VALUE_DECODE_HUMIDITY(_value) == humidity);
+
+			double result = abs(temp - LOG_VALUE_DECODE_TEMPERATURE(_value));
+
+			CPPUNIT_ASSERT(std::fpclassify(result) == FP_ZERO);
+
+			result = abs(uv - LOG_VALUE_DECODE_UV(_value));
+
+			CPPUNIT_ASSERT(std::fpclassify(result) == FP_ZERO);
 		}
 };
 

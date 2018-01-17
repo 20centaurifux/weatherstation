@@ -554,8 +554,87 @@ int8_t DeltaReader::readBits(size_t count)
 	return byte;
 }
 
-size_t ApplyDelta(LogValue& value, const uint8_t* delta)
+size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 {
-	return 0;
+	DeltaReader reader;
+
+	reader.setSource(delta);
+	reader.read();
+
+	LogValueBuilder builder;
+
+	builder.setTimestamp(LOG_VALUE_DECODE_TIMESTAMP(value) + interval + reader.seconds());
+
+	if(reader.hasTemperature())
+	{
+		if(reader.temperatureFailed())
+		{
+			builder.setTemperatureFailure(value.temp + reader.temperature());
+		}
+		else
+		{
+			double temp = (double)reader.temperature() / 10;
+
+			builder.setTemperature(LOG_VALUE_DECODE_TEMPERATURE(value) + temp);
+		}
+	}
+	else
+	{
+		builder.setTemperature(LOG_VALUE_DECODE_TEMPERATURE(value));
+	}
+
+	if(reader.hasPressure())
+	{
+		if(reader.pressureFailed())
+		{
+			builder.setPressureFailure(value.hPa + reader.pressure());
+		}
+		else
+		{
+			builder.setPressure(LOG_VALUE_DECODE_PRESSURE(value) + reader.pressure());
+		}
+	}
+	else
+	{
+		builder.setTemperature(LOG_VALUE_DECODE_PRESSURE(value));
+	}
+
+	if(reader.hasHumidity())
+	{
+		if(reader.humidityFailed())
+		{
+			builder.setHumidityFailure(value.hum + reader.humidity());
+		}
+		else
+		{
+			builder.setHumidity(LOG_VALUE_DECODE_HUMIDITY(value) + reader.humidity());
+		}
+	}
+	else
+	{
+		builder.setHumidity(LOG_VALUE_DECODE_HUMIDITY(value));
+	}
+
+	if(reader.hasUV())
+	{
+		if(reader.uvFailed())
+		{
+			builder.setUVFailure(value.uv + reader.uv());
+		}
+		else
+		{
+			double uv = (double)reader.uv() / 10;
+
+			builder.setUV(LOG_VALUE_DECODE_UV(value) + uv);
+		}
+	}
+	else
+	{
+		builder.setUV(LOG_VALUE_DECODE_UV(value));
+	}
+
+	value = builder.build();
+
+	return reader.size();
 }
 

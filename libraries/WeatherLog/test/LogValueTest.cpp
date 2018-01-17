@@ -76,7 +76,7 @@ class LogValueBuilderTest : public CppUnit::TestFixture
 
 				auto v = _builder.build();
 
-				double result =  abs(f - LOG_VALUE_DECODE_TEMPERATURE(v));
+				double result = abs(f - LOG_VALUE_DECODE_TEMPERATURE(v));
 
 				CPPUNIT_ASSERT(v.errors == 0);
 				CPPUNIT_ASSERT(std::fpclassify(result) == FP_ZERO);
@@ -123,7 +123,7 @@ class LogValueBuilderTest : public CppUnit::TestFixture
 
 				auto v = _builder.build();
 
-				double result =  abs(f - LOG_VALUE_DECODE_UV(v));
+				double result = abs(f - LOG_VALUE_DECODE_UV(v));
 
 				CPPUNIT_ASSERT(v.errors == 0);
 				CPPUNIT_ASSERT(std::fpclassify(result) == FP_ZERO);
@@ -146,7 +146,7 @@ class LogValueBuilderTest : public CppUnit::TestFixture
 
 				auto v = _builder.build();
 
-				double result =  abs(10.0 - LOG_VALUE_DECODE_TEMPERATURE(v));
+				double result = abs(10.0 - LOG_VALUE_DECODE_TEMPERATURE(v));
 
 				CPPUNIT_ASSERT(v.errors == 0);
 				CPPUNIT_ASSERT(std::fpclassify(result) == FP_ZERO);
@@ -211,7 +211,7 @@ class LogValueBuilderTest : public CppUnit::TestFixture
 
 				auto v = _builder.build();
 
-				double result =  abs(7.3 - LOG_VALUE_DECODE_UV(v));
+				double result = abs(7.3 - LOG_VALUE_DECODE_UV(v));
 
 				CPPUNIT_ASSERT(v.errors == 0);
 				CPPUNIT_ASSERT(std::fpclassify(result) == FP_ZERO);
