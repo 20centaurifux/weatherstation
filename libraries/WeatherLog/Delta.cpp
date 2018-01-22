@@ -316,23 +316,87 @@ void DeltaReader::setSource(const uint8_t *bytes)
 
 void DeltaReader::read()
 {
-	if(!_ptr || _offset)
+	if(_ptr && !_read)
 	{
-		return;
+		start();
+
+		readValueFlags();
+		readSeconds();
+		readValues();
+
+		_read = true;
+	}
+}
+
+size_t DeltaReader::calcSize()
+{
+	size_t size = 0;
+
+	if(_ptr)
+	{
+		start();
+
+		readValueFlags();
+
+		size_t bits = 11;
+
+		if(hasTemperature())
+		{
+			if(_tempFlags & VALUE_FLAG_LARGE)
+			{
+				bits += 11;
+			}
+			else
+			{
+				bits += 7;
+			}
+		}
+
+		if(hasPressure())
+		{
+			bits += 6;
+		}
+
+		if(hasUV())
+		{
+			if(_uvFlags & VALUE_FLAG_LARGE)
+			{
+				bits += 9;
+			}
+			else
+			{
+				bits += 5;
+			}
+		}
+
+		if(hasHumidity())
+		{
+			if(_humidityFlags & VALUE_FLAG_LARGE)
+			{
+				bits += 9;
+			}
+			else
+			{
+				bits += 7;
+			}
+		}
+
+		size = bits / 8;
+
+		if(bits - size * 8)
+		{
+			++size;
+		}
 	}
 
-	_offset = 11;
-
-	readValueFlags();
-	readSeconds();
-	readValues();
+	return size;
 }
 
 size_t DeltaReader::size() const
 {
 	size_t size = 0;
 
-	if(_ptr != nullptr)
+	if(_read)
 	{
 		size_t index, left;
 
@@ -349,74 +413,15 @@ size_t DeltaReader::size() const
 	return size;
 }
 
-uint8_t DeltaReader::seconds() const
+void DeltaReader::start()
 {
-	return _ptr != nullptr ? _seconds : 0;
-}
-
-bool DeltaReader::hasTemperature() const
-{
-	return _ptr != nullptr && _ptr[0] & 0x1;
-}
-
-bool DeltaReader::temperatureFailed() const
-{
-	return _ptr != nullptr && _tempFlags & VALUE_FLAG_ERROR;
-}
-
-int8_t DeltaReader::temperature() const
-{
-	return hasTemperature() ? _temp : 0;
-}
-
-bool DeltaReader::hasPressure() const
-{
-	return _ptr != nullptr && (_ptr[1] & 0x80);
-}
-
-bool DeltaReader::pressureFailed() const
-{
-	return _ptr != nullptr && _pressureFlags & VALUE_FLAG_ERROR;
-}
-
-int8_t DeltaReader::pressure() const
-{
-	return hasPressure() ? _pressure : 0;
-}
-
-bool DeltaReader::hasUV() const
-{
-	return _ptr != nullptr && (_ptr[1] & 0x40);
-}
-
-bool DeltaReader::uvFailed() const
-{
-	return _ptr != nullptr && _uvFlags & VALUE_FLAG_ERROR;
-}
-
-int8_t DeltaReader::uv() const
-{
-	return hasUV() ? _uv : 0;
-}
-
-bool DeltaReader::hasHumidity() const
-{
-	return _ptr[1] & 0x20;
-}
-
-bool DeltaReader::humidityFailed() const
-{
-	return _ptr != nullptr && _humidityFlags & VALUE_FLAG_ERROR;
-}
-
-int8_t DeltaReader::humidity() const
-{
-	return _humidity;
+	_offset = 11;
 }
 
 void DeltaReader::reset()
 {
 	_ptr = nullptr;
+	_read = false;
 	_offset = 0;
 	_errors = 0;
 	_seconds = 0;

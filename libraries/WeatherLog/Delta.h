@@ -100,23 +100,25 @@ class DeltaReader
 		DeltaReader();
 		void setSource(const uint8_t *bytes);
 		void read();
+		size_t calcSize();
 		size_t size() const;
-		uint8_t seconds() const;
-		bool hasTemperature() const;
-		bool temperatureFailed() const;
-		int8_t temperature() const;
-		bool hasPressure() const;
-		bool pressureFailed() const;
-		int8_t pressure() const;
-		bool hasUV() const;
-		bool uvFailed() const;
-		int8_t uv() const;
-		bool hasHumidity() const;
-		bool humidityFailed() const;
-		int8_t humidity() const;
+		inline uint8_t seconds() const { return _seconds; }
+		inline bool hasTemperature() const { return _ptr != nullptr && _ptr[0] & 0x1; }
+		inline bool temperatureFailed() const { return _tempFlags & VALUE_FLAG_ERROR; }
+		inline int8_t temperature() const { return _temp; }
+		inline bool hasPressure() const { return _ptr != nullptr && (_ptr[1] & 0x80); }
+		inline bool pressureFailed() const { return _pressureFlags & VALUE_FLAG_ERROR; }
+		inline int8_t pressure() const { return _pressure; }
+		inline bool hasUV() const { return _ptr != nullptr && (_ptr[1] & 0x40); }
+		inline bool uvFailed() const { return _uvFlags & VALUE_FLAG_ERROR; }
+		inline int8_t uv() const { return _uv; }
+		inline bool hasHumidity() const { return _ptr != nullptr && _ptr[1] & 0x20; }
+		inline bool humidityFailed() const { return _humidityFlags & VALUE_FLAG_ERROR; }
+		inline int8_t humidity() const { return _humidity; }
 
 	private:
 		const uint8_t *_ptr;
+		bool _read;
 		size_t _offset;
 		size_t _size;
 		int8_t _errors;
@@ -134,6 +136,7 @@ class DeltaReader
 		const uint8_t VALUE_FLAG_POS   = 2;
 		const uint8_t VALUE_FLAG_ERROR = 4;
 
+		void start();
 		void reset();
 		void readValueFlags();
 		void readSeconds();
@@ -143,6 +146,8 @@ class DeltaReader
 };
 
 size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval);
+
+size_t DeltaSize(const uint8_t *delta);
 
 #endif
 
