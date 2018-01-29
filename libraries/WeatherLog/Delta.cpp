@@ -601,7 +601,7 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 	}
 	else
 	{
-		builder.setTemperature(LOG_VALUE_DECODE_PRESSURE(value));
+		builder.setPressure(LOG_VALUE_DECODE_PRESSURE(value));
 	}
 
 	if(reader.hasHumidity())
