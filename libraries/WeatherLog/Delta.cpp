@@ -580,7 +580,7 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 		{
 			double temp = (double)reader.temperature() / 10;
 
-			builder.setTemperature(LOG_VALUE_DECODE_TEMPERATURE(value) + temp);
+			builder.setTemperature((double)LOG_VALUE_DECODE_TEMPERATURE(value) + temp);
 		}
 	}
 	else if(LOG_VALUE_TEMPERATURE_ERROR(value))
@@ -642,7 +642,7 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 		{
 			double uv = (double)reader.uv() / 10;
 
-			builder.setUV(LOG_VALUE_DECODE_UV(value) + uv);
+			builder.setUV((double)LOG_VALUE_DECODE_UV(value) + uv);
 		}
 	}
 	else if(LOG_VALUE_UV_ERROR(value))
