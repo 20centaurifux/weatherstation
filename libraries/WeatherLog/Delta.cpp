@@ -583,6 +583,10 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 			builder.setTemperature(LOG_VALUE_DECODE_TEMPERATURE(value) + temp);
 		}
 	}
+	else if(LOG_VALUE_TEMPERATURE_ERROR(value))
+	{
+		builder.setTemperatureFailure(LOG_VALUE_TEMPERATURE_ERROR_CODE(value));
+	}
 	else
 	{
 		builder.setTemperature(LOG_VALUE_DECODE_TEMPERATURE(value));
@@ -599,6 +603,10 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 			builder.setPressure(LOG_VALUE_DECODE_PRESSURE(value) + reader.pressure());
 		}
 	}
+	else if(LOG_VALUE_PRESSURE_ERROR(value))
+	{
+		builder.setPressureFailure(LOG_VALUE_PRESSURE_ERROR_CODE(value));
+	}
 	else
 	{
 		builder.setPressure(LOG_VALUE_DECODE_PRESSURE(value));
@@ -614,6 +622,10 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 		{
 			builder.setHumidity(LOG_VALUE_DECODE_HUMIDITY(value) + reader.humidity());
 		}
+	}
+	else if(LOG_VALUE_HUMIDITY_ERROR(value))
+	{
+		builder.setHumidityFailure(LOG_VALUE_HUMIDITY_ERROR_CODE(value));
 	}
 	else
 	{
@@ -632,6 +644,10 @@ size_t ApplyDelta(LogValue& value, const uint8_t* delta, uint32_t interval)
 
 			builder.setUV(LOG_VALUE_DECODE_UV(value) + uv);
 		}
+	}
+	else if(LOG_VALUE_UV_ERROR(value))
+	{
+		builder.setUVFailure(LOG_VALUE_UV_ERROR_CODE(value));
 	}
 	else
 	{
