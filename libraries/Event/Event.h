@@ -32,7 +32,9 @@ class EventCallback
 		virtual unsigned long operator()() = 0;
 };
 
-template<int MAX_EVENTS>
+typedef size_t EventId;
+
+template<size_t MAX_EVENTS>
 class EventLoop
 {
 	public:
@@ -41,41 +43,49 @@ class EventLoop
 			memset(_events, 0, sizeof(Event) * MAX_EVENTS);
 		}
 
-		int timeout(EventCallback *cb, uint16_t ms)
+		EventId timeout(EventCallback *cb, unsigned long ms)
 		{
-			int id = findNextIndex();
-
-			if(id != -1)
+			size_t index = 0;
+			EventId id = 0;
+			
+			if(findNextIndex(index))
 			{
-				_events[id].cb = cb;
-				_events[id].nextDue = getTime() + ms;
+				_events[index].cb = cb;
+				_events[index].start = getTime();
+				_events[index].timeout = ms;
+
+				id = index + 1;
 			}
 
 			return id;
 		}
 
-		void clear(int id)
+		void clear(EventId id)
 		{
-			_events[id].cb = nullptr;
+			if(id > 0 && id <= _count)
+			{
+				_events[id - 1].cb = nullptr;
+			}
 		}
 
 		void iterate()
 		{
 			unsigned long ms = getTime();
 
-			for(uint8_t i = 0; i < _tail; ++i)
+			for(uint8_t i = 0; i < _count; ++i)
 			{
-				if(_events[i].active() && _events[i].nextDue <= ms)
+				if(_events[i].active() && _events[i].due(ms))
 				{
 					unsigned long interval = (*_events[i].cb)();
 
 					if(interval)
 					{
-						_events[i].nextDue = getTime() + interval;
+						_events[i].start = getTime();
+						_events[i].timeout = interval;
 					}
 					else
 					{
-						clear(i);
+						clear(i + 1);
 					}
 				}
 			}
@@ -85,38 +95,42 @@ class EventLoop
 		typedef struct
 		{
 			EventCallback *cb;
-			unsigned long nextDue;
+			unsigned long start;
+			unsigned long timeout;
 
 			bool active()
 			{
 				return cb != nullptr;
 			}
+
+			bool due(unsigned long ms)
+			{
+				return ms - start >= timeout;
+			}
 		} Event;
 
 		Event _events[MAX_EVENTS];
-		int _tail = 0;
+		size_t _count = 0;
 
-		int findNextIndex()
+		bool findNextIndex(size_t& index)
 		{
-			int index = -1;
+			bool found = false;
 
-			if(_tail < MAX_EVENTS)
+			for(size_t i = 0; i < MAX_EVENTS && !found; ++i)
 			{
-				index = _tail;
-				++_tail;
-			}
-			else
-			{
-				for(uint8_t i = 0; i < MAX_EVENTS && index == -1; ++i)
+				if(!_events[i].active())
 				{
-					if(_events[i].active())
-					{
-						index = i;
-					}
+					index = i;
+					found = true;
 				}
 			}
 
-			return index;
+			if(found && index > _count)
+			{
+				_count = index + 1;
+			}
+
+			return found;
 		}
 
 		unsigned long getTime()
