@@ -26,10 +26,20 @@
 #include "Arduino.h"
 #endif
 
+template<size_t MAX_SIZE>
+class EventLoop;
+
 class EventCallback
 {
 	public:
+		template<size_t MAX_SIZE>
+		friend class EventLoop;
+
 		virtual unsigned long operator()() = 0;
+		inline bool const completed() { return _completed; }
+
+	private:
+		bool _completed;
 };
 
 typedef size_t EventId;
@@ -54,6 +64,8 @@ class EventLoop
 				_events[index].start = getTime();
 				_events[index].timeout = ms;
 
+				cb->_completed = false;
+
 				id = index + 1;
 			}
 
@@ -68,7 +80,7 @@ class EventLoop
 			}
 		}
 
-		void iterate()
+		void iteration()
 		{
 			unsigned long ms = getTime();
 
@@ -85,6 +97,7 @@ class EventLoop
 					}
 					else
 					{
+						_events[i].cb->_completed = true;
 						clear(i + 1);
 					}
 				}
@@ -125,7 +138,7 @@ class EventLoop
 				}
 			}
 
-			if(found && index > _count)
+			if(found && index >= _count)
 			{
 				_count = index + 1;
 			}
