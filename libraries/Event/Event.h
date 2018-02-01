@@ -84,7 +84,7 @@ class EventLoop
 		{
 			unsigned long ms = getTime();
 
-			for(uint8_t i = 0; i < _count; ++i)
+			for(size_t i = 0; i < _count; ++i)
 			{
 				if(_events[i].active() && _events[i].due(ms))
 				{
