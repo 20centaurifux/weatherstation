@@ -36,7 +36,7 @@ class EventCallback
 		friend class EventLoop;
 
 		virtual unsigned long operator()() = 0;
-		inline bool const completed() { return _completed; }
+		inline bool completed() { return _completed; };
 
 	private:
 		bool _completed;
