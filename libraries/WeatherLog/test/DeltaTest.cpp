@@ -506,9 +506,13 @@ class WeatherDeltaTest : public CppUnit::TestFixture
 		void readDelta()
 		{
 			_reader.setSource(_bytes);
+
+			size_t calculatedSize = _reader.calcSize();
+
 			_reader.read();
 
 			CPPUNIT_ASSERT(_deltaBuilder.size() == _reader.size());
+			CPPUNIT_ASSERT(calculatedSize == _reader.size());
 		}
 
 		void assertOnlyTemperatureSet()
