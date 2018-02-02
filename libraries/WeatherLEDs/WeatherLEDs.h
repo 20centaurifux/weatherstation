@@ -25,6 +25,7 @@
  * Q3 atmospheric pressure
  * Q4 humidity
  * Q5 UV level
+ * Q6 busy
  */
 
 #ifndef WEATHER_LEDS_H
@@ -48,6 +49,7 @@ class WeatherLEDs
 		void off();
 		void set(WeatherLED led);
 		void backlight(bool on);
+		void busy(bool on);
 
 	private:
 		void write(int led);
@@ -57,6 +59,7 @@ class WeatherLEDs
 		int _st_cp;
 		WeatherLED _led;
 		bool _backlight;
+		bool _busy;
 };
 #endif
 

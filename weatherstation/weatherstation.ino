@@ -19,7 +19,7 @@
 
 #define MEASURE_INTERVAL  60000ul
 #define TRANSMIT_INTERVAL 120000ul
-#define DISPLAY_INTERVAL  10000ul
+#define DISPLAY_INTERVAL  7500ul
 
 WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN);
 WeatherLog<512> weatherLog(MEASURE_INTERVAL / 1000);
@@ -30,33 +30,22 @@ EventLoop<3> events;
 
 class Measure : public EventCallback
 {
-  public:
-    Measure()
-    {
-      clear(); 
-    }
- 
+  public: 
     unsigned long operator()()
     {
-      Serial.println("MEASURE");
+      leds.busy(true);
 
-      _success = sensors.measure(_value);
+      LogValue value;
+ 
+      if(sensors.measure(value))
+      {
+        weatherLog.append(value);
+      }
 
-      return 0;
+      leds.busy(false);
+
+      return MEASURE_INTERVAL;
     }
-
-    void clear()
-    {
-      _success = false;  
-    }
-    
-    inline bool success() { return _success; }
-
-    inline LogValue& value() { return _value; }
-
-  private:
-    LogValue _value;
-    bool _success;
 };
 
 Measure measureEvent;
@@ -66,9 +55,9 @@ class Transmit: public EventCallback, public ProcessLogValue
   public: 
     unsigned long operator()()
     {
-      Serial.println("TRANSMIT");
-
+      leds.busy(true);
       weatherLog.forEach(*this);
+      leds.busy(false);
 
       return TRANSMIT_INTERVAL;
     }
@@ -100,7 +89,14 @@ class DisplayLogValue : public EventCallback
       switch(_state)
       {
         case 0:
-          showTime();
+          if(measure())
+          {
+            showTime();
+          }
+          else
+          {
+            interval = 0;
+          }
           break;
 
         case 1:
@@ -136,14 +132,20 @@ class DisplayLogValue : public EventCallback
       return interval;
     }
 
-    void setValue(LogValue value)
-    {
-      _value = value;
-    }
-
   private:
     uint8_t _state = 0;
     LogValue _value;
+
+    bool measure()
+    {
+      bool success;
+      
+      leds.busy(true);
+      success = sensors.measure(_value);
+      leds.busy(false);
+      
+      return success;
+    }
 
     void showTime()
     {
@@ -245,13 +247,11 @@ class InternalPullupButton
 InternalPullupButton btnSet(BTN_SET);
 
 EventId displayEventId = 0;
-LogValue currentValue;
 
 void loop()
 {
   if(btnSet.pressed() && !displayEventId)
   {
-    displayEvent.setValue(currentValue);
     displayEventId = events.timeout(&displayEvent, 0);
   }
 
@@ -261,20 +261,6 @@ void loop()
   }
   
   events.iteration();
-
-  if(measureEvent.completed())
-  {
-    if(measureEvent.success())
-    {
-      currentValue = measureEvent.value();
-
-      weatherLog.append(currentValue);
-    }
-
-    measureEvent.clear();
-
-    events.timeout(&measureEvent, MEASURE_INTERVAL);
-  }
   
   delay(250);
 }

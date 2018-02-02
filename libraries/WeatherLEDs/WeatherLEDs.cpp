@@ -22,6 +22,7 @@ WeatherLEDs::WeatherLEDs(int ds, int sh_cp, int st_cp)
 {
 	_led = WEATHER_LED_NONE;
 	_backlight = false;
+	_busy = false;
 	_ds = ds;
 	_sh_cp = sh_cp;
 	_st_cp = st_cp;
@@ -42,6 +43,7 @@ WeatherLEDs::off()
 {
 	_led = WEATHER_LED_NONE;
 	_backlight = false;
+	_busy = false;
 
 	this->write(0);
 }
@@ -50,13 +52,19 @@ void
 WeatherLEDs::set(WeatherLED led)
 {
 	int bg = 0;
+	int busy = 0;
 
 	if(_backlight)
 	{
 		bg = 1;
 	}
 
-	this->write(led|bg);
+	if(_busy)
+	{
+		busy = 64;
+	}
+
+	this->write(led|bg|busy);
 
 	_led = led;
 }
@@ -67,6 +75,16 @@ WeatherLEDs::backlight(bool on)
 	if(_backlight != on)
 	{
 		_backlight = on;
+		set(_led);
+	}
+}
+
+void
+WeatherLEDs::busy(bool on)
+{
+	if(_busy != on)
+	{
+		_busy = on;
 		set(_led);
 	}
 }
