@@ -2,6 +2,7 @@
 #include <WeatherLog.h>
 #include <WeatherLEDs.h>
 #include <WeatherDisplay.h>
+#include <InternalPullupButton.h>
 #include <Event.h>
 
 #define DHT11_DIO  12
@@ -226,38 +227,6 @@ void setup()
   events.timeout(&measureEvent, 0);
   events.timeout(&transmitEvent, TRANSMIT_INTERVAL);
 }
-
-class InternalPullupButton
-{
-  public:
-    InternalPullupButton(int pin) : _pin(pin)
-    {
-      pinMode(pin, INPUT_PULLUP);
-      digitalWrite(pin, HIGH);
-
-      _lastDebounce = 0;
-      _pressed = false;
-    }
-
-    bool pressed()
-    {
-      bool pressed = digitalRead(_pin) == LOW;
-
-      unsigned long interval = millis() - _lastDebounce;
-
-      if(interval > 50)
-      {
-        _pressed = pressed;
-      }
-
-      return _pressed;
-    }
-    
-  private:
-    int _pin;
-    unsigned long _lastDebounce;
-    bool _pressed;
-};
 
 InternalPullupButton btnSet(BTN_SET);
 
