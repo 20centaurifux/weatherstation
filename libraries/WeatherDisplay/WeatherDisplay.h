@@ -32,6 +32,7 @@ class WeatherDisplay
 		inline bool isOn() { return _on; }
 		void showNumber(int n);
 		void showTime(uint8_t hour, uint8_t minute);
+		void bright(bool bright);
 
 	private:
 		typedef enum
@@ -44,6 +45,7 @@ class WeatherDisplay
 		int _dioPin;
 		bool _on;
 		int _val;
+		bool _bright = false;
 		WeatherDisplayFormat _fmt;
 
 		static uint8_t encodeDigit(uint8_t digit);

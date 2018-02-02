@@ -41,15 +41,17 @@
 class WeatherSensors
 {
 	public:
-		WeatherSensors(int dht11Pin, int uvPin, int ref3VPin)
+		WeatherSensors(int dht11Pin, int uvPin, int ref3VPin, int ldrPin)
 			: _rtcFound(false)
-		        , _bmp180Found(false)
-		        , _dht11Pin(dht11Pin)
-		        , _uvPin(uvPin)
-		        , _ref3VPin(ref3VPin) {}
+			, _bmp180Found(false)
+			, _dht11Pin(dht11Pin)
+			, _uvPin(uvPin)
+			, _ref3VPin(ref3VPin)
+			, _ldrPin(ldrPin) {}
 
 		void begin();
 		bool now(DateTime& now);
+		int light();
 		bool measure(LogValue& value);
 
 	private:
@@ -61,6 +63,7 @@ class WeatherSensors
 		SimpleDHT11 _dht11;
 		int _uvPin;
 		int _ref3VPin;
+		int _ldrPin;
 
 		LogValueBuilder _builder;
 

@@ -26,7 +26,8 @@
 #define TM1637_I2C_COMM2 0xC0
 #define TM1637_I2C_COMM3 0x80
 
-#define WEATHER_DISPLAY_BRIGHTNESS 0x2
+#define WEATHER_DISPLAY_DARK   0x2
+#define WEATHER_DISPLAY_BRIGHT 0x7
 
 #define BIT_DELAY delayMicroseconds(50)
 
@@ -87,6 +88,16 @@ void WeatherDisplay::showTime(uint8_t hour, uint8_t minute)
 	_fmt = WEATHER_DISPLAY_FORMAT_TIME;
 
 	on();
+}
+
+void WeatherDisplay::bright(bool bright)
+{
+	_bright = bright;
+
+	if(isOn())
+	{
+		update();
+	}
 }
 
 void WeatherDisplay::update()
@@ -161,7 +172,14 @@ void WeatherDisplay::setSegments(const uint8_t segments[], uint8_t length)
 
 	stop();
 
-	int brightness = (WEATHER_DISPLAY_BRIGHTNESS & 0x7) | (_on ? 0x08 : 0x00);
+	int brightness = WEATHER_DISPLAY_DARK;
+
+	if(_bright)
+	{
+		brightness = WEATHER_DISPLAY_BRIGHT;
+	}
+
+	brightness = (brightness & 0x7) | (_on ? 0x08 : 0x00);
 
 	start();
 	writeByte(TM1637_I2C_COMM3 + (brightness & 0x0f));

@@ -37,6 +37,11 @@ bool WeatherSensors::now(DateTime& now)
 	return _rtcFound;
 }
 
+int WeatherSensors::light()
+{
+	return averageAnalogRead(_ldrPin);
+}
+
 bool WeatherSensors::measure(LogValue& value)
 {
 	bool success = false;

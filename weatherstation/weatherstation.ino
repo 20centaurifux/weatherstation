@@ -7,6 +7,7 @@
 #define DHT11_DIO  12
 #define UV_PIN     A0
 #define REF_3V_PIN A1
+#define LDR_PIN    A2
 
 #define TM1637_CLK 3
 #define TM1637_DIO 4
@@ -21,7 +22,7 @@
 #define TRANSMIT_INTERVAL 120000ul
 #define DISPLAY_INTERVAL  7500ul
 
-WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN);
+WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
 WeatherLog<512> weatherLog(MEASURE_INTERVAL / 1000);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
 WeatherDisplay display = WeatherDisplay(TM1637_CLK, TM1637_DIO);
@@ -79,6 +80,9 @@ class Transmit: public EventCallback, public ProcessLogValue
 
 Transmit transmitEvent;
 
+#define DARK   250
+#define BRIGHT 450
+
 class DisplayLogValue : public EventCallback
 {
   public: 
@@ -86,46 +90,43 @@ class DisplayLogValue : public EventCallback
     {
       unsigned long interval = DISPLAY_INTERVAL;
 
-      switch(_state)
+      if(!_state && !measure())
       {
-        case 0:
-          if(measure())
-          {
-            showTime();
-          }
-          else
-          {
-            interval = 0;
-          }
-          break;
-
-        case 1:
-          showTemperature();
-          break;
-
-        case 2:
-          showPressure();
-          break;
-
-        case 3:
-          showHumidity();
-          break;
-
-        case 4:
-          showUV();
-          break;
-
-        default:
-          interval = 0;
-          off();
+        interval = 0;
       }
-
-      if(interval)
+      else if(_state < 5)      
       {
+        int light = sensors.light();
+
+        setBacklight(light);
+        setDisplayBrightness(light);        
+
+        if(_state == 0)
+        {
+          showTime();
+        }
+        else if(_state == 1)
+        {
+          showTemperature(); 
+        }
+        else if(_state == 2)
+        {
+        }
+        else if(_state == 3)
+        {
+          showPressure(); 
+        }
+        else
+        {
+          showUV();
+        }
+
         ++_state;
       }
       else
       {
+        interval = 0;
+        off();
         _state = 0;
       }
 
@@ -135,6 +136,20 @@ class DisplayLogValue : public EventCallback
   private:
     uint8_t _state = 0;
     LogValue _value;
+
+    void setBacklight(int light)
+    {
+      bool on = light <= DARK;
+
+      leds.backlight(on);
+    }
+
+    void setDisplayBrightness(int light)
+    {
+      bool bright = light >= BRIGHT;
+
+      display.bright(bright);
+    }
 
     bool measure()
     {
