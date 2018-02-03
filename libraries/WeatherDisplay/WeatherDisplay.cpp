@@ -26,7 +26,7 @@
 #define TM1637_I2C_COMM2 0xC0
 #define TM1637_I2C_COMM3 0x80
 
-#define WEATHER_DISPLAY_DARK   0x2
+#define WEATHER_DISPLAY_DARK   0x3
 #define WEATHER_DISPLAY_BRIGHT 0x7
 
 #define BIT_DELAY delayMicroseconds(50)
@@ -99,6 +99,14 @@ void WeatherDisplay::showTemperature(int c)
 	on();
 }
 
+void WeatherDisplay::showError(int err)
+{
+	_val = err;
+	_fmt = WEATHER_DISPLAY_FORMAT_ERROR;
+
+	on();
+}
+
 void WeatherDisplay::bright(bool bright)
 {
 	_bright = bright;
@@ -119,9 +127,13 @@ void WeatherDisplay::update()
 	{
 		writeDec(_val, 0, false);
 	}
+	else if(_fmt == WEATHER_DISPLAY_FORMAT_TEMPERATURE)
+	{
+		write2DigitsWithSuffix(_val, SEGMENT_C);
+	}
 	else
 	{
-		writeTemperature(_val);
+		write2DigitsWithPrefix(_val, SEGMENT_E);
 	}
 }
 
@@ -160,11 +172,11 @@ void WeatherDisplay::writeDec(int num, uint8_t dots, bool leading_zero)
 	setSegments(digits, 4);
 }
 
-void WeatherDisplay::writeTemperature(int c)
+void WeatherDisplay::write2DigitsWithSuffix(int n, uint8_t suffix)
 {
 	uint8_t digits[4] = {0};
 
-	int num = abs(c);
+	int num = abs(n);
 
 	int digit = num / 10;
 
@@ -172,18 +184,42 @@ void WeatherDisplay::writeTemperature(int c)
 	{
 		digits[1] = encodeDigit(digit);
 
-		if(c < 0)
+		if(n < 0)
 		{
 			digits[0] = SEGMENT_MINUS;
 		}
 	}
-	else if(c < 0)
+	else if(n < 0)
 	{
 		digits[1] = SEGMENT_MINUS;
 	}
 
 	digits[2] = encodeDigit(num - (digit * 10));
-	digits[3] = SEGMENT_C;
+	digits[3] = suffix;
+
+	setSegments(digits, 4);
+}
+
+void WeatherDisplay::write2DigitsWithPrefix(int n, uint8_t prefix)
+{
+	uint8_t digits[4] = {0};
+
+	int num = abs(n);
+
+	int digit = num / 10;
+
+	if(digit)
+	{
+		digits[1] = prefix;
+		digits[2] = encodeDigit(digit);
+		digits[3] = encodeDigit(num - (digit * 10));
+
+	}
+	else
+	{
+		digits[2] = prefix;
+		digits[3] = encodeDigit(num);
+	}
 
 	setSegments(digits, 4);
 }

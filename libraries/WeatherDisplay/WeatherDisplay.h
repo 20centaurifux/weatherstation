@@ -33,6 +33,7 @@ class WeatherDisplay
 		void showNumber(int n);
 		void showTime(uint8_t hour, uint8_t minute);
 		void showTemperature(int c);
+		void showError(int err);
 		void bright(bool bright);
 
 	private:
@@ -40,7 +41,8 @@ class WeatherDisplay
 		{
 			WEATHER_DISPLAY_FORMAT_NUMBER,
 			WEATHER_DISPLAY_FORMAT_TIME,
-			WEATHER_DISPLAY_FORMAT_TEMPERATURE
+			WEATHER_DISPLAY_FORMAT_TEMPERATURE,
+			WEATHER_DISPLAY_FORMAT_ERROR
 		} WeatherDisplayFormat;
 
 		int _clkPin;
@@ -54,7 +56,8 @@ class WeatherDisplay
 
 		void update();
 		void writeDec(int num, uint8_t dots, bool leading_zero);
-		void writeTemperature(int c);
+		void write2DigitsWithSuffix(int n, uint8_t suffix);
+		void write2DigitsWithPrefix(int n, uint8_t prefix);
 		void setSegments(const uint8_t segments[], uint8_t length);
 		void start();
 		void stop();

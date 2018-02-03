@@ -173,7 +173,7 @@ class DisplayLogValue : public EventCallback
       }
       else
       {
-        display.showTime(0, 0);
+        display.showError(ERROR_READ_RTC);
       }
     }
 
@@ -181,28 +181,56 @@ class DisplayLogValue : public EventCallback
     {
       leds.set(WEATHER_LED_TEMPERATURE);
 
-      display.showTemperature(LOG_VALUE_DECODE_TEMPERATURE(_value));
+      if(LOG_VALUE_TEMPERATURE_ERROR(_value))
+      {
+        display.showError(LOG_VALUE_TEMPERATURE_ERROR_CODE(_value));
+      }
+      else
+      {
+        display.showTemperature(LOG_VALUE_DECODE_TEMPERATURE(_value));
+      }
     }
 
     void showPressure()
     {
       leds.set(WEATHER_LED_PRESSURE);
 
-      display.showNumber(LOG_VALUE_DECODE_PRESSURE(_value));
+      if(LOG_VALUE_PRESSURE_ERROR(_value))
+      {
+        display.showError(LOG_VALUE_PRESSURE_ERROR_CODE(_value));
+      }
+      else
+      {
+        display.showNumber(LOG_VALUE_DECODE_PRESSURE(_value));
+      }
     }
 
     void showHumidity()
     {
       leds.set(WEATHER_LED_HUMIDITY);
 
-      display.showNumber(LOG_VALUE_DECODE_HUMIDITY(_value));
+      if(LOG_VALUE_HUMIDITY_ERROR(_value))
+      {
+        display.showError(LOG_VALUE_HUMIDITY_ERROR_CODE(_value));
+      }
+      else
+      {
+        display.showNumber(LOG_VALUE_DECODE_HUMIDITY(_value));
+      }
     }
 
     void showUV()
     {
       leds.set(WEATHER_LED_UV);
 
-      display.showNumber(LOG_VALUE_DECODE_UV(_value));
+      if(LOG_VALUE_UV_ERROR(_value))
+      {
+        display.showError(LOG_VALUE_UV_ERROR_CODE(_value));
+      }
+      else
+      {
+        display.showNumber(LOG_VALUE_DECODE_UV(_value));
+      }
     }
 
     void off()
