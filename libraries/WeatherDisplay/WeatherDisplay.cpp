@@ -37,11 +37,12 @@ static const uint8_t digitToSegment[] =
 	0b01011011, 0b01001111,
 	0b01100110, 0b01101101,
 	0b01111101, 0b00000111,
-	0b01111111, 0b01101111,
-	0b01110111, 0b01111100,
-	0b00111001, 0b01011110,
-	0b01111001, 0b01110001
+	0b01111111, 0b01101111
 };
+
+#define SEGMENT_C     0b00111001
+#define SEGMENT_E     0b01111001
+#define SEGMENT_MINUS 0b01000000
 
 WeatherDisplay::WeatherDisplay(int clkPin, int dioPin)
 {
@@ -90,6 +91,14 @@ void WeatherDisplay::showTime(uint8_t hour, uint8_t minute)
 	on();
 }
 
+void WeatherDisplay::showTemperature(int c)
+{
+	_val = c;
+	_fmt = WEATHER_DISPLAY_FORMAT_TEMPERATURE;
+
+	on();
+}
+
 void WeatherDisplay::bright(bool bright)
 {
 	_bright = bright;
@@ -104,23 +113,27 @@ void WeatherDisplay::update()
 {
 	if(_fmt == WEATHER_DISPLAY_FORMAT_TIME)
 	{
-		writeDec(_val, 64, true, 4);
+		writeDec(_val, 64, true);
+	}
+	else if(_fmt == WEATHER_DISPLAY_FORMAT_NUMBER)
+	{
+		writeDec(_val, 0, false);
 	}
 	else
 	{
-		writeDec(_val, 0, false, 4);
+		writeTemperature(_val);
 	}
 }
 
-void WeatherDisplay::writeDec(int num, uint8_t dots, bool leading_zero, uint8_t length)
+void WeatherDisplay::writeDec(int num, uint8_t dots, bool leading_zero)
 {
-	uint8_t digits[4];
+	uint8_t digits[4] = {0};
 	const static int divisors[] = {1, 10, 100, 1000};
 	bool leading = true;
 
-	for(int8_t k = 0; k < 4; k++)
+	for(int8_t k = 0; k < 4; ++k)
 	{
-		int divisor = divisors[4 - 1 - k];
+		int divisor = divisors[3 - k];
 		int d = num / divisor;
 		uint8_t digit = 0;
 
@@ -129,10 +142,6 @@ void WeatherDisplay::writeDec(int num, uint8_t dots, bool leading_zero, uint8_t 
 			if(leading_zero || !leading || (k == 3))
 			{
 				digit = encodeDigit(d);
-			}
-			else
-			{
-				digit = 0;
 			}
 		}
 		else
@@ -148,7 +157,35 @@ void WeatherDisplay::writeDec(int num, uint8_t dots, bool leading_zero, uint8_t 
 		digits[k] = digit;
 	}
 
-	setSegments(digits + (4 - length), length);
+	setSegments(digits, 4);
+}
+
+void WeatherDisplay::writeTemperature(int c)
+{
+	uint8_t digits[4] = {0};
+
+	int num = abs(c);
+
+	int digit = num / 10;
+
+	if(digit)
+	{
+		digits[1] = encodeDigit(digit);
+
+		if(c < 0)
+		{
+			digits[0] = SEGMENT_MINUS;
+		}
+	}
+	else if(c < 0)
+	{
+		digits[1] = SEGMENT_MINUS;
+	}
+
+	digits[2] = encodeDigit(num - (digit * 10));
+	digits[3] = SEGMENT_C;
+
+	setSegments(digits, 4);
 }
 
 uint8_t WeatherDisplay::encodeDigit(uint8_t digit)
@@ -165,7 +202,7 @@ void WeatherDisplay::setSegments(const uint8_t segments[], uint8_t length)
 	start();
 	writeByte(TM1637_I2C_COMM2);
 
-	for(uint8_t k=0; k < length; k++)
+	for(uint8_t k = 0; k < length; k++)
 	{
 		writeByte(segments[k]);
 	}

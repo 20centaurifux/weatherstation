@@ -156,9 +156,7 @@ class DisplayLogValue : public EventCallback
     {
       bool success;
       
-      leds.busy(true);
       success = sensors.measure(_value);
-      leds.busy(false);
       
       return success;
     }
@@ -183,7 +181,7 @@ class DisplayLogValue : public EventCallback
     {
       leds.set(WEATHER_LED_TEMPERATURE);
 
-      display.showNumber(LOG_VALUE_DECODE_TEMPERATURE(_value));
+      display.showTemperature(LOG_VALUE_DECODE_TEMPERATURE(_value));
     }
 
     void showPressure()
@@ -232,7 +230,7 @@ InternalPullupButton btnSet(BTN_SET);
 
 EventId displayEventId = 0;
 
-void loop()
+void loop() 
 {
   if(btnSet.pressed() && !displayEventId)
   {

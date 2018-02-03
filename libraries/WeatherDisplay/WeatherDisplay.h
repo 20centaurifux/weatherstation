@@ -32,13 +32,15 @@ class WeatherDisplay
 		inline bool isOn() { return _on; }
 		void showNumber(int n);
 		void showTime(uint8_t hour, uint8_t minute);
+		void showTemperature(int c);
 		void bright(bool bright);
 
 	private:
 		typedef enum
 		{
 			WEATHER_DISPLAY_FORMAT_NUMBER,
-			WEATHER_DISPLAY_FORMAT_TIME
+			WEATHER_DISPLAY_FORMAT_TIME,
+			WEATHER_DISPLAY_FORMAT_TEMPERATURE
 		} WeatherDisplayFormat;
 
 		int _clkPin;
@@ -51,7 +53,8 @@ class WeatherDisplay
 		static uint8_t encodeDigit(uint8_t digit);
 
 		void update();
-		void writeDec(int num, uint8_t dots, bool leading_zero, uint8_t length);
+		void writeDec(int num, uint8_t dots, bool leading_zero);
+		void writeTemperature(int c);
 		void setSegments(const uint8_t segments[], uint8_t length);
 		void start();
 		void stop();
