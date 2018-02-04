@@ -31,6 +31,7 @@ class WeatherDisplay
 		void on();
 		inline bool isOn() { return _on; }
 		void showNumber(int n);
+		void showFloat(float f);
 		void showTime(uint8_t hour, uint8_t minute);
 		void showTemperature(int c);
 		void showError(int err);
@@ -40,6 +41,7 @@ class WeatherDisplay
 		typedef enum
 		{
 			WEATHER_DISPLAY_FORMAT_NUMBER,
+			WEATHER_DISPLAY_FORMAT_FLOAT,
 			WEATHER_DISPLAY_FORMAT_TIME,
 			WEATHER_DISPLAY_FORMAT_TEMPERATURE,
 			WEATHER_DISPLAY_FORMAT_ERROR
@@ -56,8 +58,9 @@ class WeatherDisplay
 
 		void update();
 		void writeDec(int num, uint8_t dots, bool leading_zero);
+		void writeFloat(int num);
 		void write2DigitsWithSuffix(int n, uint8_t suffix);
-		void write2DigitsWithPrefix(int n, uint8_t prefix);
+		void write2UDigitsWithPrefix(int n, uint8_t prefix);
 		void setSegments(const uint8_t segments[], uint8_t length);
 		void start();
 		void stop();

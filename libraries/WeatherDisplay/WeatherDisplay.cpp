@@ -26,7 +26,7 @@
 #define TM1637_I2C_COMM2 0xC0
 #define TM1637_I2C_COMM3 0x80
 
-#define WEATHER_DISPLAY_DARK   0x3
+#define WEATHER_DISPLAY_DARK   0x2
 #define WEATHER_DISPLAY_BRIGHT 0x7
 
 #define BIT_DELAY delayMicroseconds(50)
@@ -43,6 +43,7 @@ static const uint8_t digitToSegment[] =
 #define SEGMENT_C     0b00111001
 #define SEGMENT_E     0b01111001
 #define SEGMENT_MINUS 0b01000000
+#define SEGMENT_COMMA 0b00010000
 
 WeatherDisplay::WeatherDisplay(int clkPin, int dioPin)
 {
@@ -79,6 +80,20 @@ void WeatherDisplay::showNumber(int n)
 {
 	_val = n;
 	_fmt = WEATHER_DISPLAY_FORMAT_NUMBER;
+
+	on();
+}
+
+void WeatherDisplay::showFloat(float f)
+{
+	_val = f * 10;
+
+	if(_val < 100)
+	{
+		_val = f * 10;
+	}
+
+	_fmt = WEATHER_DISPLAY_FORMAT_FLOAT;
 
 	on();
 }
@@ -127,13 +142,17 @@ void WeatherDisplay::update()
 	{
 		writeDec(_val, 0, false);
 	}
+	else if(_fmt == WEATHER_DISPLAY_FORMAT_FLOAT)
+	{
+		writeFloat(_val);
+	}
 	else if(_fmt == WEATHER_DISPLAY_FORMAT_TEMPERATURE)
 	{
 		write2DigitsWithSuffix(_val, SEGMENT_C);
 	}
 	else
 	{
-		write2DigitsWithPrefix(_val, SEGMENT_E);
+		write2UDigitsWithPrefix(_val, SEGMENT_E);
 	}
 }
 
@@ -162,12 +181,44 @@ void WeatherDisplay::writeDec(int num, uint8_t dots, bool leading_zero)
 			num -= d * divisor;
 			leading = false;
 		}
-    
+
 		digit |= (dots & 0x80); 
 		dots <<= 1;
-    
+
 		digits[k] = digit;
 	}
+
+	setSegments(digits, 4);
+}
+
+void WeatherDisplay::writeFloat(int num)
+{
+	uint8_t digits[4] = {0};
+	int divisor = 100;
+
+	for(int8_t k = 0; k < 3; ++k)
+	{
+		int d = num / divisor;
+		uint8_t digit = 0;
+
+		if(d == 0)
+		{
+			if(k)
+			{
+				digit = encodeDigit(d);
+			}
+		}
+		else
+		{
+			digit = encodeDigit(d);
+			num -= d * divisor;
+		}
+  
+		digits[k == 2 ? 3 : k] = digit;
+		divisor /= 10;
+	}
+
+	digits[2] = SEGMENT_COMMA;
 
 	setSegments(digits, 4);
 }
@@ -200,25 +251,23 @@ void WeatherDisplay::write2DigitsWithSuffix(int n, uint8_t suffix)
 	setSegments(digits, 4);
 }
 
-void WeatherDisplay::write2DigitsWithPrefix(int n, uint8_t prefix)
+void WeatherDisplay::write2UDigitsWithPrefix(int n, uint8_t prefix)
 {
 	uint8_t digits[4] = {0};
 
-	int num = abs(n);
-
-	int digit = num / 10;
+	int digit = n / 10;
 
 	if(digit)
 	{
 		digits[1] = prefix;
 		digits[2] = encodeDigit(digit);
-		digits[3] = encodeDigit(num - (digit * 10));
+		digits[3] = encodeDigit(n - (digit * 10));
 
 	}
 	else
 	{
 		digits[2] = prefix;
-		digits[3] = encodeDigit(num);
+		digits[3] = encodeDigit(n);
 	}
 
 	setSegments(digits, 4);

@@ -112,10 +112,11 @@ class DisplayLogValue : public EventCallback
         }
         else if(_state == 2)
         {
+          showPressure();
         }
         else if(_state == 3)
         {
-          showPressure(); 
+          showHumidity(); 
         }
         else
         {
@@ -229,7 +230,7 @@ class DisplayLogValue : public EventCallback
       }
       else
       {
-        display.showNumber(LOG_VALUE_DECODE_UV(_value));
+        display.showFloat(LOG_VALUE_DECODE_UV(_value));
       }
     }
 
