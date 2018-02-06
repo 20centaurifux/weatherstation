@@ -15,31 +15,56 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#include <Arduino.h>
+#ifndef BUTTON_H
+#define BUTTON_H
 
-#include "InternalPullupButton.h"
-
-InternalPullupButton::InternalPullupButton(int pin)
+template<int PIN_MODE>
+class Button
 {
-	_pin = pin;
-	_lastDebounce = 0;
-	_pressed = false;
+	public:
+		Button(int pin)
+		{
+			_pin = pin;
+			_lastDebounce = 0;
+			_pressed = false;
 
-	pinMode(pin, INPUT_PULLUP);
-	digitalWrite(pin, HIGH);
-}
+			pinMode(pin, PIN_MODE);
 
-bool InternalPullupButton::pressed()
-{
-	bool pressed = digitalRead(_pin) == LOW;
+			if(PIN_MODE == OUTPUT)
+			{
+				digitalWrite(pin, LOW);
+			}
+			else
+			{
+				digitalWrite(pin, HIGH);
+			}
+		}
 
-	unsigned long interval = millis() - _lastDebounce;
+		bool pressed()
+		{
+			bool pressed = false;
+			int state = digitalRead(_pin);
 
-	if(interval > 50)
-	{
-		_pressed = pressed;
-	}
+			if(state == (PIN_MODE == OUTPUT) ? HIGH : LOW)
+			{
+				pressed = true;
+			}
 
-	return _pressed;
-}
+			unsigned long interval = millis() - _lastDebounce;
+
+			if(interval > 50)
+			{
+				_pressed = pressed;
+			}
+
+			return _pressed;
+		}
+
+	private:
+		int _pin;
+		unsigned long _lastDebounce;
+		bool _pressed;
+};
+
+#endif
 
