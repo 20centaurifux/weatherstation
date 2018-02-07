@@ -36,7 +36,7 @@ void PressureTendency::update(uint32_t timestamp, int pressure)
 	{
 		int seconds = _timestamp - timestamp;
 
-		if(seconds <= 10800)
+		if(seconds < 10800)
 		{
 			int index = 2 - seconds / 3600;
 
