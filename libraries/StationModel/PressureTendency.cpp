@@ -19,7 +19,7 @@
 #include <cstring>
 #endif
 
-#include "PressureTendency.h"
+#include "StationModel.h"
 
 void PressureTendency::start(uint32_t timestamp, int pressure)
 {

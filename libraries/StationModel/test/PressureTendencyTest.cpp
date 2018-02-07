@@ -21,7 +21,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 
-#include <PressureTendency.h>
+#include <StationModel.h>
 
 class PressureTendencyTest : public CppUnit::TestFixture
 {

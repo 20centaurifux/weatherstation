@@ -15,29 +15,42 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#ifndef PRESSURE_TENDENCY_H
-#define PRESSURE_TENDENCY_H
+#include "StationModel.h"
 
-#ifdef ARDUINO
-#include <Arduino.h>
-#else
-#include <stdint.h>
-#include <cstddef>
-#endif
+static const int DAY_SUMS[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-class PressureTendency
+static bool isLeapYear(int year)
 {
-	public:
-		void start(uint32_t timestamp, int pressure);
-		void update(uint32_t timestamp, int pressure);
-		int tendency() const;
+	return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
 
-	private:
-		uint32_t _timestamp;
-		int _pressure;
-		uint32_t _sums[3];
-		size_t _count[3];
-};
+static int dayOfYear(int year, int month, int day)
+{
+	int days = DAY_SUMS[month - 1];
 
-#endif
+	if(days > 59 && isLeapYear(year))
+	{
+		++days;
+	}
+
+	days += day;
+
+	return days;
+}
+
+uint8_t
+MoonPhase(int year, int month, int day)
+{
+        int goldn = (year % 19) + 1;
+        int epact = (11 * goldn + 18) % 30;
+
+        if((epact == 25 && goldn > 11) || epact == 24)
+	{
+		++epact;
+	}
+
+	int yday = dayOfYear(year, month, day);
+
+        return (((((yday + epact) * 6) + 11) % 177) / 22) & 7;
+}
 
