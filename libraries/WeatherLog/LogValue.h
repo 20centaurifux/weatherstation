@@ -22,7 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #else
-#include "Arduino.h"
+#include <Arduino.h>
 #endif
 
 typedef struct __attribute__((packed))

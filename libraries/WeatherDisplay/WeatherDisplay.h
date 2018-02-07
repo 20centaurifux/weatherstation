@@ -22,6 +22,8 @@
 #ifndef WEATHER_DISPLAY_H
 #define WEATHER_DISPLAY_H
 
+#include <Arduino.h>
+
 class WeatherDisplay
 {
 	public:

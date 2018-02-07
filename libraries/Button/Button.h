@@ -18,6 +18,8 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
+#include <Arduino.h>
+
 template<int PIN_MODE>
 class Button
 {

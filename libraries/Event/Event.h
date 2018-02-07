@@ -23,7 +23,7 @@
 #include <cstring>
 #include <ctime>
 #else
-#include "Arduino.h"
+#include <Arduino.h>
 #endif
 
 template<size_t MAX_SIZE>

@@ -15,7 +15,7 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 int averageAnalogRead(int pinToRead)
 {

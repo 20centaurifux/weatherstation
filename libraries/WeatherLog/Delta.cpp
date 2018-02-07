@@ -19,7 +19,7 @@
 #include <cstring>
 #include <cstdlib>
 #else
-#include "Arduino.h"
+#include <Arduino.h>
 #endif
 
 #include <Delta.h>

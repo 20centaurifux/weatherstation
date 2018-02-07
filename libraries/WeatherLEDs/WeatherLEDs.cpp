@@ -15,7 +15,7 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "WeatherLEDs.h"
 
 WeatherLEDs::WeatherLEDs(int ds, int sh_cp, int st_cp)

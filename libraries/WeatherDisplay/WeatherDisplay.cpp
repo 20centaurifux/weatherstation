@@ -19,7 +19,6 @@
  * This library is based on https://github.com/avishorp/TM1637
  */
 
-#include "Arduino.h"
 #include "WeatherDisplay.h"
 
 #define TM1637_I2C_COMM1 0x40
