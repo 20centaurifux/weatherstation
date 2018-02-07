@@ -2,8 +2,9 @@
 #include <WeatherLog.h>
 #include <WeatherLEDs.h>
 #include <WeatherDisplay.h>
-#include <InternalPullupButton.h>
+#include <Button.h>
 #include <Event.h>
+#include <StationModel.h>
 
 #define DHT11_DIO  12
 #define UV_PIN     A0
@@ -23,8 +24,9 @@
 #define TRANSMIT_INTERVAL 120000ul
 #define DISPLAY_INTERVAL  7500ul
 
+WeatherLog<640> weatherLog(MEASURE_INTERVAL / 1000);
+
 WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
-WeatherLog<512> weatherLog(MEASURE_INTERVAL / 1000);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
 WeatherDisplay display = WeatherDisplay(TM1637_CLK, TM1637_DIO);
 
@@ -32,7 +34,7 @@ EventLoop<3> events;
 
 class Measure : public EventCallback
 {
-  public: 
+  public:
     unsigned long operator()()
     {
       leds.busy(true);
@@ -57,9 +59,14 @@ class Transmit: public EventCallback, public ProcessLogValue
   public: 
     unsigned long operator()()
     {
-      leds.busy(true);
-      weatherLog.forEach(*this);
-      leds.busy(false);
+      DateTime n;
+
+      if(sensors.now(n))
+      {
+        leds.busy(true);
+        weatherLog.forEach(*this);
+        leds.busy(false);
+      }
 
       return TRANSMIT_INTERVAL;
     }
@@ -84,7 +91,7 @@ Transmit transmitEvent;
 #define DARK   250
 #define BRIGHT 450
 
-class DisplayLogValue : public EventCallback
+class DisplayLogValue : public EventCallback, public ProcessLogValue
 {
   public: 
     unsigned long operator()()
@@ -138,6 +145,8 @@ class DisplayLogValue : public EventCallback
   private:
     uint8_t _state = 0;
     LogValue _value;
+    DateTime _dt;
+    PressureTendency _tendency;
 
     void setBacklight(int light)
     {
@@ -157,20 +166,38 @@ class DisplayLogValue : public EventCallback
     {
       bool success;
       
-      success = sensors.measure(_value);
+      success = sensors.now(_dt) && sensors.measure(_value);
+
+      computePressureTendency();
       
       return success;
+    }
+
+    void computePressureTendency()
+    {
+      if(!LOG_VALUE_PRESSURE_ERROR(_value))
+      {
+        _tendency.start(_dt.unixtime(), LOG_VALUE_DECODE_PRESSURE(_value));
+
+        weatherLog.forEach(*this);
+      }
+    }
+
+    void operator()(const LogValue& value)
+    {
+      _tendency.update(LOG_VALUE_DECODE_TIMESTAMP(value), LOG_VALUE_DECODE_PRESSURE(value));
     }
 
     void showTime()
     {
       leds.set(WEATHER_LED_TIME);
 
-      DateTime dt;
-
-      if(sensors.now(dt))
+      if(sensors.now(_dt))
       {
-        display.showTime(dt.hour(), dt.minute());
+        display.showTime(_dt.hour(), _dt.minute());
+
+        Serial.print("MOON PHASE: ");
+        Serial.println(MoonPhase(_dt.year(), _dt.month(), _dt.day()));
       }
       else
       {
@@ -203,6 +230,9 @@ class DisplayLogValue : public EventCallback
       else
       {
         display.showNumber(LOG_VALUE_DECODE_PRESSURE(_value));
+
+        Serial.print("PRESSURE TENDENCY: ");
+        Serial.println(_tendency.tendency());
       }
     }
 
@@ -255,7 +285,7 @@ void setup()
   events.timeout(&transmitEvent, TRANSMIT_INTERVAL);
 }
 
-InternalPullupButton btnSet(BTN_SET);
+Button<INPUT_PULLUP> btnSet(BTN_SET);
 
 EventId displayEventId = 0;
 
@@ -272,6 +302,4 @@ void loop()
   }
   
   events.iteration();
-  
-  delay(250);
 }
