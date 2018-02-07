@@ -403,6 +403,8 @@ class LogValueSerializationTest : public CppUnit::TestFixture
 		}
 };
 
+CPPUNIT_TEST_SUITE_REGISTRATION(LogValueSerializationTest);
+
 int
 main(int argc, char *argv[])
 {
