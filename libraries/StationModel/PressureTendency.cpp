@@ -21,9 +21,10 @@
 
 #include "PressureTendency.h"
 
-void PressureTendency::start(uint32_t timestamp)
+void PressureTendency::start(uint32_t timestamp, int pressure)
 {
 	_timestamp = timestamp;
+	_pressure = pressure;
 
 	memset(_sums, 0, sizeof(uint32_t) * 3);
 	memset(_count, 0, sizeof(size_t) * 3);
@@ -31,18 +32,26 @@ void PressureTendency::start(uint32_t timestamp)
 
 void PressureTendency::update(uint32_t timestamp, int pressure)
 {
-	int seconds = _timestamp - timestamp;
-
-	if(seconds <= 10800)
+	if(_timestamp >= timestamp)
 	{
-		int index = 2 - seconds / 3600;
+		int seconds = _timestamp - timestamp;
 
-		_sums[index] += pressure;
-		++_count[index];
+		if(seconds <= 10800)
+		{
+			int index = 2 - seconds / 3600;
+
+			uint32_t sum = _sums[index] + pressure;
+
+			if(sum > _sums[index])
+			{
+				_sums[index] = sum;
+				++_count[index];
+			}
+		}
 	}
 }
 
-int PressureTendency::tendency(int pressure) const
+int PressureTendency::tendency() const
 {
 	int avg[3] = {0};
 	int tendency = 4;
@@ -59,40 +68,40 @@ int PressureTendency::tendency(int pressure) const
 	#define TWO_HOURS   1
 	#define THREE_HOURS 0
 
-	if(pressure > avg[THREE_HOURS])
+	if(_pressure > avg[THREE_HOURS])
 	{
-		if(avg[TWO_HOURS] > pressure && avg[ONE_HOUR] < pressure)
+		if(avg[TWO_HOURS] > _pressure && avg[ONE_HOUR] < _pressure)
 		{
 			tendency = 0;
 		}
-		else if(avg[TWO_HOURS] > pressure && avg[ONE_HOUR] == pressure)
+		else if(avg[TWO_HOURS] > _pressure && avg[ONE_HOUR] == _pressure)
 		{
 			tendency = 1;
 		}
-		else if(avg[TWO_HOURS] > pressure && avg[ONE_HOUR] > pressure)
+		else if(avg[TWO_HOURS] > _pressure && avg[ONE_HOUR] > _pressure)
 		{
 			tendency = 2;
 		}
-		else if(avg[TWO_HOURS] < pressure && avg[ONE_HOUR] > pressure)
+		else if(avg[TWO_HOURS] < _pressure && avg[ONE_HOUR] > _pressure)
 		{
 			tendency = 3;
 		}
 	}
-	else if(pressure < avg[THREE_HOURS])
+	else if(_pressure < avg[THREE_HOURS])
 	{
-		if(avg[TWO_HOURS] < pressure && avg[ONE_HOUR] > pressure)
+		if(avg[TWO_HOURS] < _pressure && avg[ONE_HOUR] > _pressure)
 		{
 			tendency = 5;
 		}
-		else if(avg[TWO_HOURS] < pressure && avg[ONE_HOUR] == pressure)
+		else if(avg[TWO_HOURS] < _pressure && avg[ONE_HOUR] == _pressure)
 		{
 			tendency = 6;
 		}
-		else if(avg[TWO_HOURS] < pressure && avg[ONE_HOUR] < pressure)
+		else if(avg[TWO_HOURS] < _pressure && avg[ONE_HOUR] < _pressure)
 		{
 			tendency = 7;
 		}
-		else if(avg[TWO_HOURS] > pressure && avg[ONE_HOUR] < pressure)
+		else if(avg[TWO_HOURS] > _pressure && avg[ONE_HOUR] < _pressure)
 		{
 			tendency = 8;
 		}

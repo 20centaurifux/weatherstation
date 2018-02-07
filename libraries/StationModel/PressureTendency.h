@@ -28,12 +28,13 @@
 class PressureTendency
 {
 	public:
-		void start(uint32_t timestamp);
+		void start(uint32_t timestamp, int pressure);
 		void update(uint32_t timestamp, int pressure);
-		int tendency(int pressure) const;
+		int tendency() const;
 
 	private:
 		uint32_t _timestamp;
+		int _pressure;
 		uint32_t _sums[3];
 		size_t _count[3];
 };
