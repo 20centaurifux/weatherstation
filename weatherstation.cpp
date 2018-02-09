@@ -22,11 +22,14 @@
 #include <Button.h>
 #include <Event.h>
 #include <StationModel.h>
+#include <RFTransmitter.h>
 
 #define DHT11_DIO  12
 #define UV_PIN     A0
 #define REF_3V_PIN A1
 #define LDR_PIN    A2
+#define RF_PIN     10
+#define RF_NODE_ID 1
 
 #define TM1637_CLK 3
 #define TM1637_DIO 4
@@ -37,8 +40,8 @@
 
 #define BTN_SET    2
 
-#define MEASURE_INTERVAL  60000ul
-#define TRANSMIT_INTERVAL 120000ul
+#define MEASURE_INTERVAL  120000ul
+#define TRANSMIT_INTERVAL 300000ul
 #define DISPLAY_INTERVAL  7500ul
 
 WeatherLog<640> weatherLog(MEASURE_INTERVAL / 1000);
@@ -46,6 +49,8 @@ WeatherLog<640> weatherLog(MEASURE_INTERVAL / 1000);
 WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
 WeatherDisplay display = WeatherDisplay(TM1637_CLK, TM1637_DIO);
+
+RFTransmitter transmitter(RF_PIN, RF_NODE_ID);
 
 EventLoop<3> events;
 
@@ -90,16 +95,15 @@ class Transmit: public EventCallback, public ProcessLogValue
 
 		void operator()(const LogValue& value)
 		{
-			Serial.print("TIMESTAMP: ");
-			Serial.println(LOG_VALUE_DECODE_TIMESTAMP(value));
-			Serial.print("TEMP: ");
-			Serial.println(LOG_VALUE_DECODE_TEMPERATURE(value));
-			Serial.print("PRESSURE: ");
-			Serial.println(LOG_VALUE_DECODE_PRESSURE(value));
-			Serial.print("HUMIDITY: ");
-			Serial.println(LOG_VALUE_DECODE_HUMIDITY(value));
-			Serial.print("UV: ");
-			Serial.println(LOG_VALUE_DECODE_UV(value));
+			uint8_t buffer[SERIALIZED_LOG_VALUE_SIZE];
+
+			SerializeLogValue(value, buffer);
+
+			transmitter.send(buffer, SERIALIZED_LOG_VALUE_SIZE);
+
+			delay(1000);
+
+			transmitter.resend(buffer, SERIALIZED_LOG_VALUE_SIZE);
 		}
 };
 
