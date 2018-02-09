@@ -1,0 +1,12 @@
+[submodule "libraries/RFTransmitter"]
+	path = libraries/RFTransmitter
+	url = https://github.com/zeitgeist87/RFTransmitter.git
+[submodule "libraries/BMP180_Breakout_Arduino_Library"]
+	path = libraries/BMP180_Breakout_Arduino_Library
+	url = https://github.com/sparkfun/BMP180_Breakout_Arduino_Library
+[submodule "libraries/SimpleDHT"]
+	path = libraries/SimpleDHT
+	url = https://github.com/winlinvip/SimpleDHT.git
+[submodule "libraries/RTClib"]
+	path = libraries/RTClib
+	url = https://github.com/adafruit/RTClib.git
