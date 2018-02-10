@@ -24,6 +24,7 @@
 void PressureTendency::start(uint32_t timestamp, int pressure)
 {
 	_timestamp = timestamp;
+	_lastTimestamp = 0;
 	_pressure = pressure;
 
 	memset(_sums, 0, sizeof(uint32_t) * 3);
@@ -32,7 +33,7 @@ void PressureTendency::start(uint32_t timestamp, int pressure)
 
 void PressureTendency::update(uint32_t timestamp, int pressure)
 {
-	if(_timestamp >= timestamp)
+	if(_timestamp >= timestamp && timestamp > _lastTimestamp)
 	{
 		int seconds = _timestamp - timestamp;
 
