@@ -29,7 +29,6 @@
 #define REF_3V_PIN A1
 #define LDR_PIN    A2
 #define RF_PIN     10
-#define RF_NODE_ID 1
 
 #define TM1637_CLK 3
 #define TM1637_DIO 4
@@ -42,9 +41,16 @@
 
 #define MEASURE_INTERVAL  60000ul
 #define TRANSMIT_INTERVAL 300000ul
-#define DISPLAY_INTERVAL  7500ul
+#define DISPLAY_INTERVAL  8000ul
 
-WeatherLog<640> weatherLog(MEASURE_INTERVAL / 1000);
+#define TRANSMIT_TIME_FILTER 900
+
+#define RF_NODE_ID       1
+#define RF_PULSE_WIDTH   302
+#define RF_BACKOFF_DELAY 25
+#define RF_RESEND_COUNT  2
+
+WeatherLog<512> weatherLog(MEASURE_INTERVAL / 1000);
 
 DailyAverage<int32_t> avgHumidty;
 DailyAverage<float> avgTemperature;
@@ -53,7 +59,7 @@ WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
 WeatherDisplay display = WeatherDisplay(TM1637_CLK, TM1637_DIO);
 
-RFTransmitter transmitter(RF_PIN, RF_NODE_ID);
+RFTransmitter transmitter(RF_PIN, RF_NODE_ID, RF_PULSE_WIDTH, RF_BACKOFF_DELAY, RF_RESEND_COUNT);
 
 EventLoop<3> events;
 
@@ -100,6 +106,8 @@ class Transmit: public EventCallback, public ProcessLogValue
 
 			if(sensors.now(n))
 			{
+				_now = n.unixtime();
+
 				leds.busy(true);
 				weatherLog.forEach(*this);
 				leds.busy(false);
@@ -110,13 +118,29 @@ class Transmit: public EventCallback, public ProcessLogValue
 
 		void operator()(const LogValue& value)
 		{
-			uint8_t buffer[SERIALIZED_LOG_VALUE_SIZE];
+			uint32_t timestamp = LOG_VALUE_DECODE_TIMESTAMP(value);
 
-			SerializeLogValue(value, buffer);
+			if(timestamp <= _now)
+			{
+				uint32_t seconds = _now - timestamp;
 
-			transmitter.send(buffer, SERIALIZED_LOG_VALUE_SIZE);
-			transmitter.resend(buffer, SERIALIZED_LOG_VALUE_SIZE);
+				if(seconds <= TRANSMIT_TIME_FILTER)
+				{
+					uint8_t buffer[SERIALIZED_LOG_VALUE_SIZE];
+
+					SerializeLogValue(value, buffer);
+
+					transmitter.send(buffer, SERIALIZED_LOG_VALUE_SIZE);
+
+					delay(10);
+
+					transmitter.resend(buffer, SERIALIZED_LOG_VALUE_SIZE);
+				}
+			}
 		}
+
+	private:
+		uint32_t _now;
 };
 
 Transmit transmitEvent;
