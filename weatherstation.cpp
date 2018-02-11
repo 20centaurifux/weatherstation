@@ -40,11 +40,14 @@
 
 #define BTN_SET    2
 
-#define MEASURE_INTERVAL  120000ul
+#define MEASURE_INTERVAL  60000ul
 #define TRANSMIT_INTERVAL 300000ul
 #define DISPLAY_INTERVAL  7500ul
 
 WeatherLog<640> weatherLog(MEASURE_INTERVAL / 1000);
+
+DailyAverage<int32_t> avgHumidty;
+DailyAverage<float> avgTemperature;
 
 WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
@@ -66,6 +69,18 @@ class Measure : public EventCallback
 			if(sensors.measure(value))
 			{
 				weatherLog.append(value);
+
+				uint32_t timestamp = LOG_VALUE_DECODE_TIMESTAMP(value);
+
+				if(!LOG_VALUE_TEMPERATURE_ERROR(value))
+				{
+					avgTemperature.update(timestamp, LOG_VALUE_DECODE_TEMPERATURE(value));
+				}
+
+				if(!LOG_VALUE_HUMIDITY_ERROR(value))
+				{
+					avgHumidty.update(timestamp, LOG_VALUE_DECODE_HUMIDITY(value));
+				}
 			}
 
 			leds.busy(false);
@@ -100,9 +115,6 @@ class Transmit: public EventCallback, public ProcessLogValue
 			SerializeLogValue(value, buffer);
 
 			transmitter.send(buffer, SERIALIZED_LOG_VALUE_SIZE);
-
-			delay(1000);
-
 			transmitter.resend(buffer, SERIALIZED_LOG_VALUE_SIZE);
 		}
 };
@@ -230,6 +242,9 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 		{
 			leds.set(WEATHER_LED_TEMPERATURE);
 
+			Serial.print("AVERAGE TEMPERATURE: ");
+			Serial.println(avgTemperature.average());
+
 			if(LOG_VALUE_TEMPERATURE_ERROR(_value))
 			{
 				display.showError(LOG_VALUE_TEMPERATURE_ERROR_CODE(_value));
@@ -244,6 +259,9 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 		{
 			leds.set(WEATHER_LED_PRESSURE);
 
+			Serial.print("PRESSURE TENDENCY: ");
+			Serial.println(_tendency.tendency());
+
 			if(LOG_VALUE_PRESSURE_ERROR(_value))
 			{
 				display.showError(LOG_VALUE_PRESSURE_ERROR_CODE(_value));
@@ -251,15 +269,15 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 			else
 			{
 				display.showNumber(LOG_VALUE_DECODE_PRESSURE(_value));
-
-				Serial.print("PRESSURE TENDENCY: ");
-				Serial.println(_tendency.tendency());
 			}
 		}
 
 		void showHumidity()
 		{
 			leds.set(WEATHER_LED_HUMIDITY);
+
+			Serial.print("AVERAGE HUMIDITY: ");
+			Serial.println(avgHumidty.average());
 
 			if(LOG_VALUE_HUMIDITY_ERROR(_value))
 			{
