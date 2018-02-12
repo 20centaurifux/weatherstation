@@ -15,8 +15,8 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef TOOLS_H
+#define TOOLS_H
 
 int averageAnalogRead(int pinToRead);
 

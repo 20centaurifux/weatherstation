@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include <WeatherSensors.h>
-#include <Helpers.h>
+#include <Tools.h>
 
 void WeatherSensors::begin()
 {
