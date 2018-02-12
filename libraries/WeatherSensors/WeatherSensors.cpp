@@ -108,7 +108,7 @@ bool WeatherSensors::measureBMP180_Temperature(double& temperature)
 	}
 	else
 	{
-		errorCode = ERROR_BMP180_START_PRESSURE;
+		errorCode = ERROR_BMP180_START_TEMPERATURE;
 	}
 
 	if(errorCode)
