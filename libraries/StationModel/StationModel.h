@@ -18,31 +18,13 @@
 #ifndef STATION_MODEL_H
 #define STATION_MODEL_H
 
-#ifdef ARDUINO
-#include <Arduino.h>
-#include <RTClib.h>
-#else
+#ifndef ARDUINO
 #include <stdint.h>
 #include <cstddef>
-#endif
+#else
+#include <Arduino.h>
+#include <RTClib.h>
 
-class PressureTendency
-{
-	public:
-		PressureTendency() { start(0, 0); }
-		void start(uint32_t timestamp, int pressure);
-		void update(uint32_t timestamp, int pressure);
-		int tendency() const;
-
-	private:
-		uint32_t _timestamp;
-		uint32_t _lastTimestamp;
-		int _pressure;
-		uint32_t _sums[3];
-		size_t _count[3];
-};
-
-#ifdef ARDUINO
 template<typename T>
 class DailyAverage
 {
@@ -91,7 +73,29 @@ class DailyAverage
 };
 #endif
 
-uint8_t MoonPhase(int year, int month, int day);
+class PressureTendency
+{
+	public:
+		PressureTendency() { start(0, 0); }
+		void start(uint32_t timestamp, int pressure);
+		void update(uint32_t timestamp, int pressure);
+		int tendency() const;
+
+	private:
+		uint32_t _timestamp;
+		uint32_t _lastTimestamp;
+		int _pressure;
+		uint32_t _sums[3];
+		size_t _count[3];
+};
+
+uint8_t moonPhase(int year, int month, int day);
+
+int mapMoonPhase(uint8_t moonPhase);
+int mapTemperature(float c);
+int mapPressureTendency(uint8_t tendency);
+int mapHumidity(uint8_t hum);
+int mapUV(float uv);
 
 #endif
 

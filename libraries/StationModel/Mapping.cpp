@@ -17,40 +17,62 @@
 
 #include "StationModel.h"
 
-static const int DAY_SUMS[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-
-static bool isLeapYear(int year)
+static int mapInteger(int v, int min, int max)
 {
-	return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-}
-
-static int dayOfYear(int year, int month, int day)
-{
-	int days = DAY_SUMS[month - 1];
-
-	if(days > 59 && isLeapYear(year))
+	if(v < min)
 	{
-		++days;
+		v = min;
+	}
+	else if(v > max)
+	{
+		v = max;
 	}
 
-	days += day;
+	float a = v - min;
+	float b = max - min;
 
-	return days;
+	return (a / b) * 0xff;
 }
 
-uint8_t
-moonPhase(int year, int month, int day)
+int mapMoonPhase(uint8_t moonPhase)
 {
-        int goldn = (year % 19) + 1;
-        int epact = (11 * goldn + 18) % 30;
-
-        if((epact == 25 && goldn > 11) || epact == 24)
+	if(moonPhase > 7)
 	{
-		++epact;
+		moonPhase = 0;
 	}
 
-	int yday = dayOfYear(year, month, day);
+	return moonPhase * 32 + 14;
+}
 
-        return (((((yday + epact) * 6) + 11) % 177) / 22) & 7;
+int mapTemperature(float c)
+{
+	return mapInteger((int)c, -10, 40);
+}
+
+int mapPressureTendency(uint8_t tendency)
+{
+	if(tendency > 8)
+	{
+		tendency = 0;
+	}
+
+	return mapInteger((tendency + 1) * 5, 0, 50);
+}
+
+int mapHumidity(uint8_t hum)
+{
+	return mapInteger(hum, 0, 10);
+}
+
+int mapUV(float uv)
+{
+	int v = 42;
+
+	if(uv >= 0.9)
+	{
+		v = 204;
+	}
+
+	return v;
 }
 

@@ -22,6 +22,7 @@
 #include <Button.h>
 #include <Event.h>
 #include <StationModel.h>
+#include <CircularBuffer.h>
 #include <RFTransmitter.h>
 
 #define DHT11_DIO  12
@@ -29,6 +30,7 @@
 #define REF_3V_PIN A1
 #define LDR_PIN    A2
 #define RF_PIN     10
+#define VOLT_PIN   11
 
 #define TM1637_CLK 3
 #define TM1637_DIO 4
@@ -47,13 +49,14 @@
 
 #define RF_NODE_ID       1
 #define RF_PULSE_WIDTH   302
-#define RF_BACKOFF_DELAY 25
-#define RF_RESEND_COUNT  2
+#define RF_BACKOFF_DELAY 20
+#define RF_RESEND_COUNT  1
 
 WeatherLog<512> weatherLog(MEASURE_INTERVAL / 1000);
 
-DailyAverage<int32_t> avgHumidty;
-DailyAverage<float> avgTemperature;
+DailyAverage<int32_t> dailyHumidity;
+DailyAverage<float> dailyTemperature;
+CircularBuffer<float, 900000 / MEASURE_INTERVAL> uvBuffer;
 
 WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
@@ -80,12 +83,17 @@ class Measure : public EventCallback
 
 				if(!LOG_VALUE_TEMPERATURE_ERROR(value))
 				{
-					avgTemperature.update(timestamp, LOG_VALUE_DECODE_TEMPERATURE(value));
+					dailyTemperature.update(timestamp, LOG_VALUE_DECODE_TEMPERATURE(value));
 				}
 
 				if(!LOG_VALUE_HUMIDITY_ERROR(value))
 				{
-					avgHumidty.update(timestamp, LOG_VALUE_DECODE_HUMIDITY(value));
+					dailyHumidity.update(timestamp, LOG_VALUE_DECODE_HUMIDITY(value));
+				}
+
+				if(!LOG_VALUE_UV_ERROR(value))
+				{
+					uvBuffer.append(LOG_VALUE_DECODE_UV(value));
 				}
 			}
 
@@ -131,9 +139,6 @@ class Transmit: public EventCallback, public ProcessLogValue
 					SerializeLogValue(value, buffer);
 
 					transmitter.send(buffer, SERIALIZED_LOG_VALUE_SIZE);
-
-					delay(10);
-
 					transmitter.resend(buffer, SERIALIZED_LOG_VALUE_SIZE);
 				}
 			}
@@ -148,12 +153,14 @@ Transmit transmitEvent;
 #define DARK   250
 #define BRIGHT 450
 
-class DisplayLogValue : public EventCallback, public ProcessLogValue
+class DisplayLogValue : public EventCallback
 {
 	public: 
 		unsigned long operator()()
 		{
 			unsigned long interval = DISPLAY_INTERVAL;
+
+			analogWrite(VOLT_PIN, 0);
 
 			if(!_state && !measure())
 			{
@@ -191,8 +198,8 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 			}
 			else
 			{
-				interval = 0;
 				off();
+				interval = 0;
 				_state = 0;
 			}
 
@@ -200,10 +207,61 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 		}
 
 	private:
+		class CalculateAverageUV : public ProcessBufferValue<float>
+		{
+			public:
+				CalculateAverageUV() : _uv(0.0), _count(0) {}
+
+				void operator()(float uv)
+				{
+					_uv += uv;
+					++_count;
+				}
+
+				float average()
+				{
+					float avg = 0.0;
+
+					if(_count)
+					{
+						avg = _uv / _count;
+					}
+
+					return avg;
+				}
+
+			private:
+				float _uv;
+				size_t _count;
+		};
+
+		class CalculatePressureTendency : public ProcessLogValue
+		{
+			public:
+				CalculatePressureTendency(uint32_t timestamp, int pressure)
+				{
+					_tendency.start(timestamp, pressure);
+				}
+
+				void operator()(const LogValue& value)
+				{
+					_tendency.update(LOG_VALUE_DECODE_TIMESTAMP(value), LOG_VALUE_DECODE_PRESSURE(value));
+				}
+	
+				uint8_t tendency()
+				{
+					return _tendency.tendency();
+				}
+
+			private:
+				PressureTendency _tendency;
+		};
+
 		uint8_t _state = 0;
 		LogValue _value;
 		DateTime _dt;
-		PressureTendency _tendency;
+		float _avgUV;
+		uint8_t _pressureTendency;
 
 		void setBacklight(int light)
 		{
@@ -226,23 +284,39 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 			success = sensors.now(_dt) && sensors.measure(_value);
 
 			computePressureTendency();
+			computeAverageUV();
 			
 			return success;
 		}
 
 		void computePressureTendency()
 		{
-			if(!LOG_VALUE_PRESSURE_ERROR(_value))
+			if(LOG_VALUE_PRESSURE_ERROR(_value))
 			{
-				_tendency.start(_dt.unixtime(), LOG_VALUE_DECODE_PRESSURE(_value));
+				_pressureTendency = 0;
+			}
+			else
+			{
+				CalculatePressureTendency f(_dt.unixtime(), LOG_VALUE_DECODE_PRESSURE(_value));
 
-				weatherLog.forEach(*this);
+				weatherLog.forEach(f);
+				_pressureTendency = f.tendency();
 			}
 		}
 
-		void operator()(const LogValue& value)
+		void computeAverageUV()
 		{
-			_tendency.update(LOG_VALUE_DECODE_TIMESTAMP(value), LOG_VALUE_DECODE_PRESSURE(value));
+			if(LOG_VALUE_PRESSURE_ERROR(_value))
+			{
+				_avgUV = 0.0;
+			}
+			else
+			{
+				CalculateAverageUV f;
+
+				uvBuffer.forEach(f);
+				_avgUV = f.average();
+			}
 		}
 
 		void showTime()
@@ -251,10 +325,11 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 
 			if(sensors.now(_dt))
 			{
-				display.showTime(_dt.hour(), _dt.minute());
+				uint32_t phase = moonPhase(_dt.year(), _dt.month(), _dt.day());
 
-				Serial.print("MOON PHASE: ");
-				Serial.println(MoonPhase(_dt.year(), _dt.month(), _dt.day()));
+				analogWrite(VOLT_PIN, mapMoonPhase(phase));
+
+				display.showTime(_dt.hour(), _dt.minute());
 			}
 			else
 			{
@@ -266,15 +341,13 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 		{
 			leds.set(WEATHER_LED_TEMPERATURE);
 
-			Serial.print("AVERAGE TEMPERATURE: ");
-			Serial.println(avgTemperature.average());
-
 			if(LOG_VALUE_TEMPERATURE_ERROR(_value))
 			{
 				display.showError(LOG_VALUE_TEMPERATURE_ERROR_CODE(_value));
 			}
 			else
 			{
+				analogWrite(VOLT_PIN, mapTemperature(dailyTemperature.average()));
 				display.showTemperature(LOG_VALUE_DECODE_TEMPERATURE(_value));
 			}
 		}
@@ -283,15 +356,13 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 		{
 			leds.set(WEATHER_LED_PRESSURE);
 
-			Serial.print("PRESSURE TENDENCY: ");
-			Serial.println(_tendency.tendency());
-
 			if(LOG_VALUE_PRESSURE_ERROR(_value))
 			{
 				display.showError(LOG_VALUE_PRESSURE_ERROR_CODE(_value));
 			}
 			else
 			{
+				analogWrite(VOLT_PIN, mapPressureTendency(_pressureTendency));
 				display.showNumber(LOG_VALUE_DECODE_PRESSURE(_value));
 			}
 		}
@@ -300,15 +371,13 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 		{
 			leds.set(WEATHER_LED_HUMIDITY);
 
-			Serial.print("AVERAGE HUMIDITY: ");
-			Serial.println(avgHumidty.average());
-
 			if(LOG_VALUE_HUMIDITY_ERROR(_value))
 			{
 				display.showError(LOG_VALUE_HUMIDITY_ERROR_CODE(_value));
 			}
 			else
 			{
+				analogWrite(VOLT_PIN, mapHumidity(dailyHumidity.average()));
 				display.showNumber(LOG_VALUE_DECODE_HUMIDITY(_value));
 			}
 		}
@@ -323,12 +392,14 @@ class DisplayLogValue : public EventCallback, public ProcessLogValue
 			}
 			else
 			{
+				analogWrite(VOLT_PIN, mapUV(_avgUV));
 				display.showFloat(LOG_VALUE_DECODE_UV(_value));
 			}
 		}
 
 		void off()
 		{
+			analogWrite(VOLT_PIN, 0);
 			leds.off();
 			display.off();
 		}
@@ -340,6 +411,8 @@ void setup()
 {
 	Serial.begin(9600);
 
+	pinMode(VOLT_PIN, OUTPUT);
+
 	sensors.begin();
 	leds.begin();
 	display.off();
@@ -348,14 +421,14 @@ void setup()
 	events.timeout(&transmitEvent, TRANSMIT_INTERVAL);
 }
 
-Button<INPUT_PULLUP> btnSet(BTN_SET);
-
-EventId displayEventId = 0;
-
 int main(void) 
 {
 	init();
 	setup();
+
+	Button<INPUT_PULLUP> btnSet(BTN_SET);
+
+	EventId displayEventId = 0;
 
 	while(1)
 	{
