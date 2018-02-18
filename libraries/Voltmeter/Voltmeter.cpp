@@ -22,23 +22,7 @@
 
 void Voltmeter::begin()
 {
-	int v = (255 / 5) * _maxVoltage;
-
-	int start = v - 50;
-
-	if(start < 0)
-	{
-		start = 0;
-	}
-
-	int end = v + 50;
-
-	if(end > 255)
-	{
-		end = 255;
-	}
-
-	calibrate(start, end);
+	analogWrite(_outPin, 0);
 }
 
 void Voltmeter::write(int value, int min, int max) const
@@ -48,15 +32,20 @@ void Voltmeter::write(int value, int min, int max) const
 	analogWrite(_outPin, v);
 }
 
-void Voltmeter::calibrate(int start, int end)
+void Voltmeter::calibrate()
 {
+	int start;
+	int end;
+
+	computeCalibrationRange(start, end);
+
 	_maxValue = start;
 
 	for(int i = start; i < end; ++i)
 	{
 		analogWrite(_outPin, i);
 
-		delay(50);
+		delay(100);
 
 		float measured = averageAnalogRead(_refPin, 255) * (5.0 / 1023.0);
 
@@ -66,6 +55,27 @@ void Voltmeter::calibrate(int start, int end)
 		}
 
 		_maxValue = i;
+	}
+
+	analogWrite(_outPin, 0);
+}
+
+void Voltmeter::computeCalibrationRange(int& start, int& end) const
+{
+	int v = (255 / 5) * _maxVoltage;
+
+	start = v - 50;
+
+	if(start < 0)
+	{
+		start = 0;
+	}
+
+	end = v + 50;
+
+	if(end > 255)
+	{
+		end = 255;
 	}
 }
 

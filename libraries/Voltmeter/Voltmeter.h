@@ -29,6 +29,7 @@ class Voltmeter
 
 		void begin();
 		void write(int value, int min, int max) const;
+		void calibrate();
 
 	private:
 		int _outPin;
@@ -36,7 +37,7 @@ class Voltmeter
 		float _maxVoltage;
 		int _maxValue;
 
-		void calibrate(int start, int end);
+		void computeCalibrationRange(int& start, int& end) const;
 		int mapValue(int value, int min, int max) const;
 };
 
