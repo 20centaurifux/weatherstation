@@ -92,9 +92,7 @@ class PressureTendency
 uint8_t moonPhase(int year, int month, int day);
 
 int mapMoonPhase(uint8_t moonPhase);
-int mapTemperature(float c);
 int mapPressureTendency(uint8_t tendency);
-int mapHumidity(uint8_t hum);
 int mapUV(float uv);
 
 #endif

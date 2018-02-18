@@ -24,6 +24,7 @@
 #define LDR_PIN    A2
 #define RF_PIN     10
 #define VOLT_PIN   11
+#define VOLT_REF   A7
 #define TM1637_CLK 3
 #define TM1637_DIO 4
 #define DS         7

@@ -44,6 +44,10 @@ extern WeatherLEDs leds;
 
 extern WeatherDisplay display;
 
+#include <Voltmeter.h>
+
+extern Voltmeter voltmeter;
+
 #include <RFTransmitter.h>
 
 extern RFTransmitter transmitter;

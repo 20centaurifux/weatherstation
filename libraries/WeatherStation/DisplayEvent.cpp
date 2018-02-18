@@ -18,13 +18,12 @@
 #include <Events.h>
 #include <extern.h>
 #include <config.h>
-#include <pins.h>
 
 unsigned long DisplayEvent::operator()()
 {
 	unsigned long interval = DISPLAY_INTERVAL;
 
-	analogWrite(VOLT_PIN, 0);
+	voltmeter.write(0, 0, 0);
 
 	if(!_state && !measure())
 	{
@@ -134,7 +133,7 @@ void DisplayEvent::showTime()
 	{
 		uint32_t phase = moonPhase(_dt.year(), _dt.month(), _dt.day());
 
-		analogWrite(VOLT_PIN, mapMoonPhase(phase));
+		voltmeter.write(mapMoonPhase(phase), 0, 30);
 
 		display.showTime(_dt.hour(), _dt.minute());
 	}
@@ -154,7 +153,7 @@ void DisplayEvent::showTemperature()
 	}
 	else
 	{
-		analogWrite(VOLT_PIN, mapTemperature(dailyTemperature.average()));
+		voltmeter.write(dailyTemperature.average(), -16, 32);
 		display.showTemperature(LOG_VALUE_DECODE_TEMPERATURE(_value));
 	}
 }
@@ -169,7 +168,7 @@ void DisplayEvent::showPressure()
 	}
 	else
 	{
-		analogWrite(VOLT_PIN, mapPressureTendency(_pressureTendency));
+		voltmeter.write(mapPressureTendency(_pressureTendency), 0, 30);
 		display.showNumber(LOG_VALUE_DECODE_PRESSURE(_value));
 	}
 }
@@ -184,7 +183,7 @@ void DisplayEvent::showHumidity()
 	}
 	else
 	{
-		analogWrite(VOLT_PIN, mapHumidity(dailyHumidity.average()));
+		voltmeter.write(dailyHumidity.average(), 0, 100);
 		display.showNumber(LOG_VALUE_DECODE_HUMIDITY(_value));
 	}
 }
@@ -199,14 +198,14 @@ void DisplayEvent::showUV()
 	}
 	else
 	{
-		analogWrite(VOLT_PIN, mapUV(_avgUV));
+		voltmeter.write(mapUV(_avgUV), 0, 30);
 		display.showFloat(LOG_VALUE_DECODE_UV(_value));
 	}
 }
 
 void DisplayEvent::off()
 {
-	analogWrite(VOLT_PIN, 0);
+	voltmeter.write(0, 0, 0);
 	leds.off();
 	display.off();
 }
