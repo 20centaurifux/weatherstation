@@ -15,22 +15,74 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
+#include "Voltmeter.h"
+
 #include <Arduino.h>
+#include <Tools.h>
 
-int averageAnalogRead(int pinToRead, byte numberOfReadings)
+void Voltmeter::begin()
 {
-	uint32_t runningValue = 0;
+	int v = (255 / 5) * _maxVoltage;
 
-	for(byte i = 0; i < numberOfReadings; ++i)
+	int start = v - 50;
+
+	if(start < 0)
 	{
-		runningValue += analogRead(pinToRead);
+		start = 0;
 	}
 
-	return runningValue / numberOfReadings;
+	int end = v + 50;
+
+	if(end > 255)
+	{
+		end = 255;
+	}
+
+	calibrate(start, end);
 }
 
-float mapFloat(float x, float in_min, float in_max, float out_min, float out_max)
+void Voltmeter::write(int value, int min, int max) const
 {
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	int v = mapValue(value, min, max);
+
+	analogWrite(_outPin, v);
+}
+
+void Voltmeter::calibrate(int start, int end)
+{
+	_maxValue = start;
+
+	for(int i = start; i < end; ++i)
+	{
+		analogWrite(_outPin, i);
+
+		delay(50);
+
+		float measured = averageAnalogRead(_refPin, 255) * (5.0 / 1023.0);
+
+		if(measured > _maxVoltage)
+		{
+			break;
+		}
+
+		_maxValue = i;
+	}
+}
+
+int Voltmeter::mapValue(int value, int min, int max) const
+{
+	if(value < min)
+	{
+		value = min;
+	}
+	else if(value > max)
+	{
+		value = max;
+	}
+
+	float a = value - min;
+	float b = max - min;
+
+	return (a / b) * _maxValue;
 }
 

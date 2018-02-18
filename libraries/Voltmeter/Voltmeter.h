@@ -15,22 +15,30 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#include <Arduino.h>
+#ifndef VOLTMETER_H
+#define VOLTMETER_H
 
-int averageAnalogRead(int pinToRead, byte numberOfReadings)
+class Voltmeter
 {
-	uint32_t runningValue = 0;
+	public:
+		Voltmeter(int outPin, int refPin, float maxVoltage)
+			: _outPin(outPin),
+			_refPin(refPin),
+			_maxVoltage(maxVoltage),
+			_maxValue(0) {}
 
-	for(byte i = 0; i < numberOfReadings; ++i)
-	{
-		runningValue += analogRead(pinToRead);
-	}
+		void begin();
+		void write(int value, int min, int max) const;
 
-	return runningValue / numberOfReadings;
-}
+	private:
+		int _outPin;
+		int _refPin;
+		float _maxVoltage;
+		int _maxValue;
 
-float mapFloat(float x, float in_min, float in_max, float out_min, float out_max)
-{
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
+		void calibrate(int start, int end);
+		int mapValue(int value, int min, int max) const;
+};
+
+#endif
 
