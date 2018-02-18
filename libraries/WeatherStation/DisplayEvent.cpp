@@ -183,7 +183,7 @@ void DisplayEvent::showHumidity()
 	}
 	else
 	{
-		voltmeter.write(dailyHumidity.average(), 0, 100);
+		voltmeter.write(dailyHumidity.average() + 20, 0, 120);
 		display.showNumber(LOG_VALUE_DECODE_HUMIDITY(_value));
 	}
 }
