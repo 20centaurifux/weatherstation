@@ -37,7 +37,7 @@ CircularBuffer<float, UV_BUFFER_SIZE> uvBuffer;
 WeatherSensors sensors(DHT11_DIO, UV_PIN, REF_3V_PIN, LDR_PIN);
 WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
 WeatherDisplay display = WeatherDisplay(TM1637_CLK, TM1637_DIO);
-Voltmeter voltmeter(VOLT_PIN, VOLT_REF, 3.0);
+Voltmeter voltmeter(VOLT_PIN, 3.0);
 
 RFTransmitter transmitter(RF_PIN, RF_NODE_ID, RF_PULSE_WIDTH, RF_BACKOFF_DELAY, RF_RESEND_COUNT);
 
@@ -45,21 +45,6 @@ static EventLoop<3> events;
 
 static MeasureEvent measureEvent;
 static TransmitEvent transmitEvent;
-
-void calibration()
-{
-	leds.backlight(true);
-	leds.busy(true);
-	leds.set(WEATHER_LED_TIME);
-	display.showNumber(9999);
-	display.bright(true);
-
-	voltmeter.calibrate();
-
-	leds.off();
-	display.off();
-	voltmeter.write(0, 0, 0);
-}
 
 void setup()
 {
@@ -69,8 +54,6 @@ void setup()
 	sensors.begin();
 	leds.begin();
 	voltmeter.begin();
-
-	calibration();
 
 	events.timeout(&measureEvent, 0);
 	events.timeout(&transmitEvent, TRANSMIT_INTERVAL);

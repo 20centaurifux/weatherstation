@@ -21,23 +21,17 @@
 class Voltmeter
 {
 	public:
-		Voltmeter(int outPin, int refPin, float maxVoltage)
-			: _outPin(outPin),
-			_refPin(refPin),
-			_maxVoltage(maxVoltage),
-			_maxValue(0) {}
+		Voltmeter(int outPin, float maxVoltage)
+			: _outPin(outPin)
+			, _maxVoltage(maxVoltage) {}
 
 		void begin();
 		void write(int value, int min, int max) const;
-		void calibrate();
 
 	private:
 		int _outPin;
-		int _refPin;
 		float _maxVoltage;
-		int _maxValue;
 
-		void computeCalibrationRange(int& start, int& end) const;
 		int mapValue(int value, int min, int max) const;
 };
 
