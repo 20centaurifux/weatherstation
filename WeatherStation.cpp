@@ -50,6 +50,8 @@ void setup()
 {
 	Serial.begin(9600);
 
+	analogReference(EXTERNAL);
+
 	display.begin();
 	sensors.begin();
 	leds.begin();
