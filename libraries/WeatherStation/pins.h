@@ -19,8 +19,8 @@
 #define PINS_H
 
 #define DHT11_DIO  A3
-#define UV_PIN     A0
-#define REF_3V_PIN A1
+#define UV_PIN     A1
+#define REF_3V_PIN A0
 #define LDR_PIN    A2
 #define RF_PIN     10
 #define VOLT_PIN   11
