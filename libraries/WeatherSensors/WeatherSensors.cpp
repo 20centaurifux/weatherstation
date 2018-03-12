@@ -37,6 +37,26 @@ bool WeatherSensors::now(DateTime& now)
 	return _rtcFound;
 }
 
+void WeatherSensors::setDateTime(const DateTime& dt)
+{
+	if(_rtcFound)
+	{
+		RTC_DS3231::adjust(dt);
+	}
+}
+
+bool WeatherSensors::rtcLostPower()
+{
+	bool result = false;
+
+	if(_rtcFound)
+	{
+		result = _rtc.lostPower();
+	}
+
+	return result;
+}
+
 int WeatherSensors::light()
 {
 	return averageAnalogRead(_ldrPin);

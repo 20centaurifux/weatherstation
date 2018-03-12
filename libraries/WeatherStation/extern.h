@@ -52,5 +52,11 @@ extern Voltmeter voltmeter;
 
 extern RFTransmitter transmitter;
 
+#include <Button.h>
+
+extern Button<INPUT_PULLUP> btnSet;
+extern Button<INPUT_PULLUP> btnUp;
+extern Button<INPUT_PULLUP> btnDown;
+
 #endif
 

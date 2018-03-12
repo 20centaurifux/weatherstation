@@ -27,6 +27,7 @@
 #include <Events.h>
 #include <CircularBuffer.h>
 #include <RFTransmitter.h>
+#include <Setup.h>
 
 WeatherLog<512> weatherLog(MEASURE_INTERVAL / 1000);
 
@@ -39,6 +40,10 @@ WeatherLEDs leds = WeatherLEDs(DS, SH_CP, ST_CP);
 WeatherDisplay display = WeatherDisplay(TM1637_CLK, TM1637_DIO);
 Voltmeter voltmeter(VOLT_PIN, 3.0);
 
+Button<INPUT_PULLUP> btnSet(BTN_SET);
+Button<INPUT_PULLUP> btnUp(BTN_UP);
+Button<INPUT_PULLUP> btnDown(BTN_DOWN);
+
 RFTransmitter transmitter(RF_PIN, RF_NODE_ID, RF_PULSE_WIDTH, RF_BACKOFF_DELAY, RF_RESEND_COUNT);
 
 static EventLoop<3> events;
@@ -46,7 +51,7 @@ static EventLoop<3> events;
 static MeasureEvent measureEvent;
 static TransmitEvent transmitEvent;
 
-void setup()
+void setupDevices()
 {
 	Serial.begin(9600);
 
@@ -64,18 +69,34 @@ void setup()
 int main(void) 
 {
 	init();
-	setup();
+	setupDevices();
 
-	Button<INPUT_PULLUP> btnSet(BTN_SET);
+	Setup setup;
+
+	if(setup.required())
+	{
+		setup.run();
+	}
 
 	DisplayEvent displayEvent;
 	EventId displayEventId = 0;
 
 	while(1)
 	{
-		if(btnSet.pressed() && !displayEventId)
+		if(btnSet.pressed())
 		{
-			displayEventId = events.timeout(&displayEvent, 0);
+			if(displayEventId)
+			{
+				events.clear(displayEventId);
+				displayEvent.reset();
+				displayEventId = 0;
+
+				setup.run();
+			}
+			else
+			{
+				displayEventId = events.timeout(&displayEvent, 0);
+			}
 		}
 
 		if(displayEvent.completed())

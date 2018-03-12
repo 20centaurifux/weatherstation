@@ -15,55 +15,28 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#ifndef BUTTON_H
-#define BUTTON_H
+#ifndef SETUP_H
+#define SETUP_H
 
-#include <Arduino.h>
-
-template<int PIN_MODE>
-class Button
+class Setup
 {
 	public:
-		Button(int pin)
-		{
-			_pin = pin;
-			_lastDebounce = 0;
-
-			pinMode(pin, PIN_MODE);
-
-			if(PIN_MODE == OUTPUT)
-			{
-				digitalWrite(pin, LOW);
-			}
-			else
-			{
-				digitalWrite(pin, HIGH);
-			}
-		}
-
-		bool pressed()
-		{
-			bool pressed = false;
-			unsigned long interval = millis() - _lastDebounce;
-
-			if(interval > 180)
-			{
-				int state = digitalRead(_pin);
-
-				if(state == (PIN_MODE == OUTPUT) ? HIGH : LOW)
-				{
-					pressed = true;
-				}
-
-				_lastDebounce = millis();
-			}
-
-			return pressed;
-		}
+		bool required() const;
+		void run() const;
 
 	private:
-		int _pin;
-		unsigned long _lastDebounce;
+		typedef enum
+		{
+			ENTER_NUMBER,
+			ENTER_HOURS,
+			ENTER_MINUTES,
+			ENTER_SECONDS
+		} EnterNumberFormat;
+
+		void turnOffDevices() const;
+		void setDateTime() const;
+		void resetLogs() const;
+		int enterNumber(int min, int max, EnterNumberFormat format, int n, int timePart) const;
 };
 
 #endif

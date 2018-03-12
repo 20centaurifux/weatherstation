@@ -18,9 +18,15 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
+#include <Arduino.h>
+
 int averageAnalogRead(int pinToRead, byte numberOfReadings = 8);
 
 float mapFloat(float x, float in_min, float in_max, float out_min, float out_max);
+
+#define isLeapYear(year) (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
+
+int daysOfMonth(int year, int month);
 
 #endif
 

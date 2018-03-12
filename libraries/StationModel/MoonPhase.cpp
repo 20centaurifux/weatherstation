@@ -15,14 +15,11 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
+#include <Tools.h>
+
 #include "StationModel.h"
 
 static const int DAY_SUMS[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-
-static bool isLeapYear(int year)
-{
-	return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-}
 
 static int dayOfYear(int year, int month, int day)
 {

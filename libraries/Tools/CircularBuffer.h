@@ -37,6 +37,12 @@ class CircularBuffer
 	public:
 		CircularBuffer() : _count(0), _head(0) {}
 
+		void clear()
+		{
+			_count = 0;
+			_head = 0;
+		}
+
 		void append(T value)
 		{
 			if(_count < SIZE)

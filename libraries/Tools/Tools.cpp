@@ -15,7 +15,7 @@
     General Public License v3 for more details.
  ***************************************************************************/
 
-#include <Arduino.h>
+#include <Tools.h>
 
 int averageAnalogRead(int pinToRead, byte numberOfReadings)
 {
@@ -32,5 +32,28 @@ int averageAnalogRead(int pinToRead, byte numberOfReadings)
 float mapFloat(float x, float in_min, float in_max, float out_min, float out_max)
 {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+int daysOfMonth(int year, int month)
+{
+	int days = 30;
+
+	if(month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12)
+	{
+		days = 31;
+	}
+	else if(month == 2)
+	{
+		if(isLeapYear(year))
+		{
+			days = 29;
+		}
+		else
+		{
+			days = 28;
+		}
+	}
+
+	return days;
 }
 

@@ -52,6 +52,8 @@ class WeatherSensors
 
 		void begin();
 		bool now(DateTime& now);
+		void setDateTime(const DateTime &dt);
+		bool rtcLostPower();
 		int light();
 		bool measure(LogValue& value);
 

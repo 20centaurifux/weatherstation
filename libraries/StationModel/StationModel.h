@@ -31,6 +31,13 @@ class DailyAverage
 	public:
 		DailyAverage() : _count(0), _day(0), _lastTimestamp(0) {}
 
+		void clear()
+		{
+			_count = 0;
+			_day = 0;
+			_lastTimestamp = 0;
+		}
+
 		void update(uint32_t timestamp, T val)
 		{
 			if(timestamp > _lastTimestamp)

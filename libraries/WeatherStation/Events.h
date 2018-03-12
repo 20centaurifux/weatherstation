@@ -47,6 +47,7 @@ class DisplayEvent : public EventCallback
 
 		DisplayEvent() : _state(0) {}
 		unsigned long operator()();
+		void reset();
 
 	private:
 		class CalculateAverageUV : public ProcessBufferValue<float>

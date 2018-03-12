@@ -69,6 +69,11 @@ unsigned long DisplayEvent::operator()()
 	return interval;
 }
 
+void DisplayEvent::reset()
+{
+	_state = 0;
+}
+
 void DisplayEvent::setBacklight(int light)
 {
 	bool on = light <= DisplayEvent::DARK;
